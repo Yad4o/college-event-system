@@ -1,0 +1,20 @@
+#!/bin/bash
+# Usage: source activate
+# Activates the project virtual environment.
+# Must be sourced (not executed) so the activation affects your current shell.
+
+if [ "${BASH_SOURCE[0]}" == "${0}" ]; then
+  echo "ERROR: This script must be sourced, not executed."
+  echo "Run:  source activate"
+  exit 1
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [ ! -d "$SCRIPT_DIR/venv" ]; then
+  echo "Virtual environment not found. Run 'bash setup.sh' first."
+  return 1
+fi
+
+source "$SCRIPT_DIR/venv/bin/activate"
+echo "✓ Virtual environment activated. (Python $(python --version))"
