@@ -18,8 +18,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post("/register", response_model=UserRead, status_code=201)
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
     """Create a new account and send a verification email."""
-    user = auth_svc.register(db, data)
-    return user
+    return auth_svc.register(db, data)
 
 
 @router.get("/verify-email", response_model=UserRead)
@@ -44,23 +43,28 @@ def login(data: LoginRequest, response: Response, db: Session = Depends(get_db))
 
 
 @router.post("/refresh", response_model=TokenResponse)
-def refresh(
+async def refresh(
     db: Session = Depends(get_db),
     refresh_token: str | None = Cookie(default=None),
 ):
-    """Issue a new access token using the HttpOnly refresh cookie."""
+    """Issue a new access token; rejects blocklisted tokens."""
     if not refresh_token:
         from fastapi import HTTPException, status
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token missing",
         )
-    return auth_svc.refresh_access_token(db, refresh_token)
+    return await auth_svc.refresh_access_token(db, refresh_token)
 
 
 @router.post("/logout", status_code=204)
-def logout(response: Response):
-    """Clear the refresh token cookie."""
+async def logout(
+    response: Response,
+    refresh_token: str | None = Cookie(default=None),
+):
+    """Blocklist the refresh token jti in Redis and clear the cookie."""
+    if refresh_token:
+        await auth_svc.logout(refresh_token)
     response.delete_cookie("refresh_token")
 
 
