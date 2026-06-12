@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from app.models.club import Club, ClubMembership
+from app.models.club import Club, ClubMembership, ClubJoinRequest, ClubApplicationStatus
 
 
 def get_club_by_id(db: Session, club_id: int) -> Club | None:
@@ -21,7 +21,6 @@ def get_clubs(
 
 
 def create_club(db: Session, data, created_by_id: int) -> Club:
-    """Create a club and add the creator as president."""
     club = Club(
         name=data.name,
         description=data.description,
@@ -63,4 +62,27 @@ def get_membership(db: Session, user_id: int, club_id: int) -> ClubMembership | 
         db.query(ClubMembership)
         .filter(ClubMembership.user_id == user_id, ClubMembership.club_id == club_id)
         .first()
+    )
+
+
+def get_join_request(db: Session, user_id: int, club_id: int) -> ClubJoinRequest | None:
+    return (
+        db.query(ClubJoinRequest)
+        .filter(ClubJoinRequest.user_id == user_id, ClubJoinRequest.club_id == club_id)
+        .first()
+    )
+
+
+def get_join_request_by_id(db: Session, request_id: int) -> ClubJoinRequest | None:
+    return db.query(ClubJoinRequest).filter(ClubJoinRequest.id == request_id).first()
+
+
+def get_pending_join_requests(db: Session, club_id: int) -> list[ClubJoinRequest]:
+    return (
+        db.query(ClubJoinRequest)
+        .filter(
+            ClubJoinRequest.club_id == club_id,
+            ClubJoinRequest.status == ClubApplicationStatus.pending,
+        )
+        .all()
     )
