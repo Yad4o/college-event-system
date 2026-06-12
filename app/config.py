@@ -28,15 +28,13 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
-    EMAIL_FROM: str = "noreply@college.edu"
+    EMAILS_FROM_EMAIL: str = "noreply@college.edu"
 
     # App
     APP_NAME: str = "College Event & Club System"
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "http://localhost:5173"
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
+    model_config = {"env_file": ".env", "extra": "ignore"}
 
 
 settings = Settings()
