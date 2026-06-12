@@ -69,3 +69,20 @@ def send_waitlist_promotion_email(self, to: str, event_title: str, event_id: int
         _send_smtp(to, f"You're in! Your RSVP for {event_title} is confirmed", html)
     except Exception as exc:
         raise self.retry(exc=exc, countdown=60)
+
+
+@celery_app.task(name="tasks.send_reminder_email", bind=True, max_retries=3)
+def send_reminder_email(self, to: str, event_title: str, start_at: str, event_id: int) -> None:
+    """24-hour reminder email for a confirmed RSVP."""
+    event_url = f"{settings.FRONTEND_URL}/events/{event_id}"
+    html = f"""
+    <p>Hi,</p>
+    <p>Just a reminder that <strong>{event_title}</strong> is happening tomorrow
+    at <strong>{start_at}</strong>.</p>
+    <p><a href="{event_url}">View event details</a></p>
+    <p>See you there!</p>
+    """
+    try:
+        _send_smtp(to, f"Reminder: {event_title} is tomorrow!", html)
+    except Exception as exc:
+        raise self.retry(exc=exc, countdown=60)
