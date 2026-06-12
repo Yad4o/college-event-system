@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 297mm;
+      height: 210mm;
+      font-family: Georgia, "Times New Roman", serif;
+      background: #ffffff;
+      color: #1a1a2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .page {
+      width: 260mm;
+      height: 180mm;
+      border: 6pt solid #2c3e7a;
+      outline: 2pt solid #8b9dc3;
+      outline-offset: -10pt;
+      padding: 20mm 24mm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      text-align: center;
+    }
+
+    .issuer {
+      font-size: 11pt;
+      letter-spacing: 3pt;
+      text-transform: uppercase;
+      color: #2c3e7a;
+    }
+
+    .headline {
+      font-size: 28pt;
+      font-weight: normal;
+      letter-spacing: 2pt;
+      text-transform: uppercase;
+      color: #2c3e7a;
+      margin-top: 4mm;
+    }
+
+    .subtitle {
+      font-size: 10pt;
+      color: #555;
+      margin-top: 2mm;
+      letter-spacing: 1pt;
+    }
+
+    .presented-to {
+      font-size: 10pt;
+      color: #555;
+      margin-top: 6mm;
+      text-transform: uppercase;
+      letter-spacing: 2pt;
+    }
+
+    .student-name {
+      font-size: 26pt;
+      font-style: italic;
+      color: #1a1a2e;
+      border-bottom: 1.5pt solid #2c3e7a;
+      padding-bottom: 2mm;
+      margin-top: 2mm;
+      min-width: 160mm;
+    }
+
+    .body-text {
+      font-size: 11pt;
+      color: #333;
+      margin-top: 4mm;
+      line-height: 1.6;
+      max-width: 200mm;
+    }
+
+    .event-title {
+      font-weight: bold;
+    }
+
+    .footer {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 6mm;
+      font-size: 8pt;
+      color: #555;
+    }
+
+    .footer .date-block,
+    .footer .code-block {
+      text-align: center;
+    }
+
+    .footer .date-block p,
+    .footer .code-block p {
+      border-top: 1pt solid #999;
+      padding-top: 1mm;
+      min-width: 50mm;
+    }
+
+    .footer .date-label,
+    .footer .code-label {
+      font-size: 7pt;
+      text-transform: uppercase;
+      letter-spacing: 1pt;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div>
+      <div class="issuer">{{ app_name }}</div>
+      <div class="headline">Certificate of {{ certificate_type | title }}</div>
+      <div class="subtitle">This is to proudly certify that</div>
+    </div>
+
+    <div>
+      <div class="presented-to">presented to</div>
+      <div class="student-name">{{ student_name }}</div>
+      <div class="body-text">
+        has successfully participated in
+        <span class="event-title">{{ event_title }}</span>
+        held on {{ event_date }}.
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="date-block">
+        <p>{{ event_date }}</p>
+        <span class="date-label">Date</span>
+      </div>
+      <div>
+        <!-- intentional centre gap -->
+      </div>
+      <div class="code-block">
+        <p>{{ unique_code }}</p>
+        <span class="code-label">Verification Code</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
