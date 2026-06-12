@@ -53,3 +53,19 @@ def send_password_reset_email(self, to: str, token: str) -> None:
         _send_smtp(to, f"Reset your {settings.APP_NAME} password", html)
     except Exception as exc:
         raise self.retry(exc=exc, countdown=60)
+
+
+@celery_app.task(name="tasks.send_waitlist_promotion_email", bind=True, max_retries=3)
+def send_waitlist_promotion_email(self, to: str, event_title: str, event_id: int) -> None:
+    """Notify a waitlisted user that they have been promoted to confirmed."""
+    event_url = f"{settings.FRONTEND_URL}/events/{event_id}"
+    html = f"""
+    <p>Great news!</p>
+    <p>A spot has opened up for <strong>{event_title}</strong> and your RSVP has been
+    confirmed. You are now registered to attend.</p>
+    <p><a href="{event_url}">View event details</a></p>
+    """
+    try:
+        _send_smtp(to, f"You're in! Your RSVP for {event_title} is confirmed", html)
+    except Exception as exc:
+        raise self.retry(exc=exc, countdown=60)
