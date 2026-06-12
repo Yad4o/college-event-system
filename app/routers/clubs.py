@@ -65,3 +65,48 @@ def delete_club(
     current_user: User = Depends(get_current_user),
 ):
     club_service.delete_club(db, club_id, current_user)
+
+
+# ── Membership & Join Requests ────────────────────────────────────────────────
+
+@router.post("/{club_id}/join", status_code=201)
+def join_club(
+    club_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Join open club directly or submit a request for invite-only clubs."""
+    return club_service.join_club(db, club_id, current_user)
+
+
+@router.get("/{club_id}/join-requests")
+def list_join_requests(
+    club_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List pending join requests (club admin only)."""
+    return club_service.list_join_requests(db, club_id, current_user)
+
+
+@router.patch("/{club_id}/join-requests/{request_id}")
+def decide_join_request(
+    club_id: int,
+    request_id: int,
+    decision: str = Query(..., pattern="^(approved|rejected)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Approve or reject a join request (club admin only)."""
+    return club_service.decide_join_request(db, club_id, request_id, decision, current_user)
+
+
+@router.delete("/{club_id}/members/{user_id}", status_code=204)
+def remove_member(
+    club_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Remove a member from the club."""
+    club_service.remove_member(db, club_id, user_id, current_user)
