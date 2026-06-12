@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, users, clubs, club_applications
+from app.routers import auth, users, clubs, club_applications, events
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -22,6 +22,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(clubs.router)
 app.include_router(club_applications.router)
+app.include_router(events.router)
 
 
 @app.get("/health", tags=["Health"])
