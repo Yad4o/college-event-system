@@ -1,5 +1,5 @@
 """
-Event business logic — CRUD + QR token lifecycle.
+Event business logic — CRUD, QR token lifecycle, and RSVP / waitlist management.
 
 Cloudinary upload is best-effort: if credentials are missing the poster URL
 is simply left as None rather than crashing the request.
@@ -9,15 +9,17 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from app.models.event import Event, EventType
+from app.models.event import Event, EventRSVP, RSVPStatus
 from app.models.club import ClubMembership, ClubMemberRole
 from app.models.user import User, UserRole
-from app.schemas.event import EventCreate, EventRead, EventUpdate
+from app.schemas.event import EventCreate, EventRead, EventUpdate, RsvpRead
 from app.utils.event_repo import (
     get_event_by_id,
     get_events as _get_events,
     count_confirmed_rsvps,
     count_waitlisted_rsvps,
+    get_first_waitlisted,
+    get_rsvp,
 )
 from app.utils.qr import generate_event_qr_token
 
@@ -83,7 +85,7 @@ def _upload_poster(image_bytes: bytes | None) -> str | None:
         return None
 
 
-# ── public service functions ──────────────────────────────────────────────────
+# ── CRUD ──────────────────────────────────────────────────────────────────────
 
 def get_events(
     db: Session,
@@ -185,3 +187,91 @@ def delete_event(db: Session, event_id: int, current_user: User) -> None:
 
     db.delete(event)
     db.commit()
+
+
+# ── RSVP & waitlist ───────────────────────────────────────────────────────────
+
+def rsvp(db: Session, event_id: int, current_user: User) -> RsvpRead:
+    event = get_event_by_id(db, event_id)
+    if not event:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+    if event.is_cancelled:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Event is cancelled")
+
+    if get_rsvp(db, event_id, current_user.id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Already RSVPed")
+
+    confirmed = count_confirmed_rsvps(db, event_id)
+
+    if event.seat_limit is None or confirmed < event.seat_limit:
+        rsvp_row = EventRSVP(
+            event_id=event_id,
+            user_id=current_user.id,
+            status=RSVPStatus.confirmed,
+        )
+    else:
+        # Seat limit reached — place on waitlist
+        waitlisted = count_waitlisted_rsvps(db, event_id)
+        rsvp_row = EventRSVP(
+            event_id=event_id,
+            user_id=current_user.id,
+            status=RSVPStatus.waitlisted,
+            waitlist_position=waitlisted + 1,
+        )
+
+    db.add(rsvp_row)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Already RSVPed")
+
+    db.refresh(rsvp_row)
+    return RsvpRead.model_validate(rsvp_row)
+
+
+def cancel_rsvp(db: Session, event_id: int, current_user: User) -> None:
+    event = get_event_by_id(db, event_id)
+    if not event:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+
+    rsvp_row = get_rsvp(db, event_id, current_user.id)
+    if not rsvp_row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="RSVP not found")
+
+    was_confirmed = rsvp_row.status == RSVPStatus.confirmed
+    db.delete(rsvp_row)
+    db.flush()
+
+    # Promote first waitlisted person if a confirmed slot just freed up
+    if was_confirmed:
+        next_up = get_first_waitlisted(db, event_id)
+        if next_up:
+            next_up.status = RSVPStatus.confirmed
+            next_up.waitlist_position = None
+
+            # Dispatch promotion email (import here to avoid circular imports)
+            try:
+                from app.tasks.email import send_waitlist_promotion_email
+                send_waitlist_promotion_email.delay(
+                    next_up.user.email,
+                    event.title,
+                    event_id,
+                )
+            except Exception:
+                # Email failure must never block the cancellation
+                pass
+
+    db.commit()
+
+
+def list_rsvps(db: Session, event_id: int, current_user: User) -> list[RsvpRead]:
+    """Return all RSVPs for an event — club admin only."""
+    event = get_event_by_id(db, event_id)
+    if not event:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+
+    _assert_club_admin(db, current_user, event.club_id)
+
+    rows = db.query(EventRSVP).filter(EventRSVP.event_id == event_id).all()
+    return [RsvpRead.model_validate(r) for r in rows]
