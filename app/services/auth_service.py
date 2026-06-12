@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.models.user import User
 from app.schemas.auth import RegisterRequest, LoginRequest
-from app.utils.security import verify_password
+from app.utils.security import verify_password, hash_password
 from app.utils.jwt import create_access_token, create_refresh_token, decode_token
 from app.utils.user_repo import (
     get_user_by_email,
@@ -88,7 +88,7 @@ def login(db: Session, data: LoginRequest) -> dict:
     }
 
 
-def refresh_access_token(db: Session, refresh_token: str) -> dict:
+async def refresh_access_token(db: Session, refresh_token: str) -> dict:
     payload = decode_token(refresh_token)
 
     if payload.get("type") != "refresh":
@@ -96,6 +96,16 @@ def refresh_access_token(db: Session, refresh_token: str) -> dict:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token type",
         )
+
+    jti = payload.get("jti")
+    if jti:
+        from app.utils.redis_client import get_redis
+        redis = await get_redis()
+        if await redis.get(f"blocklist:{jti}"):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has been revoked",
+            )
 
     user = get_user_by_id(db, int(payload["sub"]))
     if not user or not user.is_active:
@@ -110,10 +120,30 @@ def refresh_access_token(db: Session, refresh_token: str) -> dict:
     }
 
 
+async def logout(refresh_token: str) -> None:
+    """Blocklist the refresh token's jti in Redis so it cannot be reused."""
+    try:
+        payload = decode_token(refresh_token)
+    except HTTPException:
+        return  # already invalid — nothing to blocklist
+
+    jti = payload.get("jti")
+    if not jti:
+        return
+
+    exp = payload.get("exp")
+    now = int(datetime.now(timezone.utc).timestamp())
+    ttl = max((exp - now) if exp else 0, 1)
+
+    from app.utils.redis_client import get_redis
+    redis = await get_redis()
+    await redis.setex(f"blocklist:{jti}", ttl, "1")
+
+
 def forgot_password(db: Session, email: str) -> None:
     user = get_user_by_email(db, email)
     if not user:
-        return  # silent — prevents user enumeration
+        return
 
     token = secrets.token_urlsafe(32)
     user.password_reset_token = token
@@ -125,8 +155,6 @@ def forgot_password(db: Session, email: str) -> None:
 
 
 def reset_password(db: Session, token: str, new_password: str) -> None:
-    from app.utils.security import hash_password
-
     user = get_user_by_reset_token(db, token)
     if not user:
         raise HTTPException(
