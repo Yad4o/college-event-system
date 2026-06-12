@@ -21,11 +21,10 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     role = Column(Enum(UserRole), default=UserRole.student, nullable=False)
 
-    # Student-specific profile fields
     branch = Column(String, nullable=True)
     year = Column(Integer, nullable=True)
     bio = Column(Text, nullable=True)
-    skills = Column(Text, nullable=True)        # comma-separated
+    skills = Column(Text, nullable=True)
     profile_picture = Column(String, nullable=True)
 
     is_active = Column(Boolean, default=True)
@@ -37,8 +36,8 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Relationships
     memberships = relationship("ClubMembership", back_populates="user", cascade="all, delete-orphan")
+    join_requests = relationship("ClubJoinRequest", back_populates="user", cascade="all, delete-orphan")
     club_applications = relationship("ClubApplication", back_populates="applicant", cascade="all, delete-orphan")
     rsvps = relationship("EventRSVP", back_populates="user", cascade="all, delete-orphan")
     attendance_records = relationship("EventAttendance", back_populates="user", cascade="all, delete-orphan")
