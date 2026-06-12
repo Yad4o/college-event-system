@@ -1,4 +1,6 @@
 from celery import Celery
+from celery.schedules import crontab
+
 from app.config import settings
 
 celery_app = Celery(
@@ -14,6 +16,14 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
     task_track_started=True,
+    # ── Celery Beat periodic tasks ────────────────────────────────────────────
+    beat_schedule={
+        "send-event-reminders-hourly": {
+            "task": "tasks.send_event_reminders",
+            # Run at the top of every hour
+            "schedule": crontab(minute=0),
+        },
+    },
 )
 
 celery_app.autodiscover_tasks(["app.tasks"])
