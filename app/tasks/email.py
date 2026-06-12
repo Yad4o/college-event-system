@@ -86,3 +86,21 @@ def send_reminder_email(self, to: str, event_title: str, start_at: str, event_id
         _send_smtp(to, f"Reminder: {event_title} is tomorrow!", html)
     except Exception as exc:
         raise self.retry(exc=exc, countdown=60)
+
+
+@celery_app.task(name="tasks.send_certificate_issued_email", bind=True, max_retries=3)
+def send_certificate_issued_email(
+    self, to: str, student_name: str, event_title: str, pdf_url: str, unique_code: str
+) -> None:
+    """Notify a user that their certificate is ready for download."""
+    verify_url = f"{settings.FRONTEND_URL}/certificates/verify/{unique_code}"
+    html = f"""
+    <p>Hi {student_name},</p>
+    <p>Your certificate of participation for <strong>{event_title}</strong> is ready.</p>
+    <p><a href="{pdf_url}">Download your certificate (PDF)</a></p>
+    <p>You can also verify this certificate at: <a href="{verify_url}">{verify_url}</a></p>
+    """
+    try:
+        _send_smtp(to, f"Your certificate for {event_title} is ready", html)
+    except Exception as exc:
+        raise self.retry(exc=exc, countdown=60)
