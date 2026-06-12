@@ -1,12 +1,12 @@
 import enum
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum, Text, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum, Text, ForeignKey, JSON, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
 
 
 class JoinType(str, enum.Enum):
-    open = "open"           # anyone can join
+    open = "open"
     invite_only = "invite_only"
 
 
@@ -30,9 +30,9 @@ class Club(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False, index=True)
     description = Column(Text, nullable=True)
-    domain = Column(String, nullable=True)          # technical, cultural, sports, etc.
+    domain = Column(String, nullable=True)
     logo_url = Column(String, nullable=True)
-    social_links = Column(JSON, nullable=True)       # {"instagram": "...", "linkedin": "..."}
+    social_links = Column(JSON, nullable=True)
     join_type = Column(Enum(JoinType), default=JoinType.open, nullable=False)
     is_active = Column(Boolean, default=True)
     is_suspended = Column(Boolean, default=False)
@@ -41,8 +41,8 @@ class Club(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Relationships
     memberships = relationship("ClubMembership", back_populates="club", cascade="all, delete-orphan")
+    join_requests = relationship("ClubJoinRequest", back_populates="club", cascade="all, delete-orphan")
     events = relationship("Event", back_populates="club", cascade="all, delete-orphan")
     announcements = relationship("Announcement", back_populates="club", cascade="all, delete-orphan")
     recruitment_drives = relationship("RecruitmentDrive", back_populates="club", cascade="all, delete-orphan")
@@ -52,6 +52,7 @@ class Club(Base):
 
 class ClubMembership(Base):
     __tablename__ = "club_memberships"
+    __table_args__ = (UniqueConstraint("user_id", "club_id", name="uq_membership"),)
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -61,6 +62,21 @@ class ClubMembership(Base):
 
     user = relationship("User", back_populates="memberships")
     club = relationship("Club", back_populates="memberships")
+
+
+class ClubJoinRequest(Base):
+    """Pending request to join a club (used when join_type = invite_only)."""
+    __tablename__ = "club_join_requests"
+    __table_args__ = (UniqueConstraint("user_id", "club_id", name="uq_join_request"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    club_id = Column(Integer, ForeignKey("clubs.id"), nullable=False, index=True)
+    status = Column(Enum(ClubApplicationStatus), default=ClubApplicationStatus.pending, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="join_requests")
+    club = relationship("Club", back_populates="join_requests")
 
 
 class ClubApplication(Base):
