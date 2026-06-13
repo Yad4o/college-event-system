@@ -4,7 +4,9 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Clubs from './pages/Clubs'
+import ClubDetail from './pages/ClubDetail'
 import Events from './pages/Events'
+import EventDetail from './pages/EventDetail'
 
 export default function App() {
   return (
@@ -18,7 +20,9 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/clubs" element={<Clubs />} />
+          <Route path="/clubs/:id" element={<ClubDetail />} />
           <Route path="/events" element={<Events />} />
+          <Route path="/events/:id" element={<EventDetail />} />
         </Route>
 
         {/* Fallback */}
