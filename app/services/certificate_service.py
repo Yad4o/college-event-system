@@ -6,6 +6,11 @@ Phase 25 logic:
   - verify_certificate — public lookup by unique_code
   - get_my_certificates — current user's cert list
   - get_event_certificates — club admin view of all certs for an event
+
+Phase 32 addition:
+  - notify_certificate_ready called from the Celery task (app/tasks/certificate.py)
+    after the PDF is uploaded, so the hook lives there — not here — to keep the
+    service free of async task coupling.
 """
 
 import secrets
@@ -55,6 +60,7 @@ def issue_for_event(
 
     - Skips users who already have a certificate of the same type for this event.
     - Dispatches a Celery task per new certificate to render + upload the PDF.
+      The task calls notify_certificate_ready after successful upload (Phase 32).
     - Returns the count of newly created certificates.
     """
     event = get_event_by_id(db, event_id)
