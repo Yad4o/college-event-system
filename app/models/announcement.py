@@ -8,7 +8,9 @@ class Announcement(Base):
     __tablename__ = "announcements"
 
     id = Column(Integer, primary_key=True, index=True)
-    club_id = Column(Integer, ForeignKey("clubs.id"), nullable=False, index=True)
+    # NULL  → platform-wide announcement (college_admin only, Phase 28)
+    # set   → club-scoped announcement   (club president, Phase 27)
+    club_id = Column(Integer, ForeignKey("clubs.id"), nullable=True, index=True)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     title = Column(String, nullable=False)
     body = Column(Text, nullable=False)
@@ -18,5 +20,5 @@ class Announcement(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    club = relationship("Club", back_populates="announcements")
+    club = relationship("Club", back_populates="announcements", foreign_keys=[club_id])
     author = relationship("User")
