@@ -60,7 +60,7 @@ class EventRSVP(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     event = relationship("Event", back_populates="rsvps")
-    user = relationship("User", back_populates="rsvps")
+    user = relationship("User", foreign_keys=[user_id], back_populates="rsvps")
 
 
 class EventAttendance(Base):
@@ -73,7 +73,7 @@ class EventAttendance(Base):
     marked_at = Column(DateTime(timezone=True), server_default=func.now())
 
     event = relationship("Event", back_populates="attendance_records")
-    user = relationship("User", back_populates="attendance_records")
+    user = relationship("User", foreign_keys=[user_id], back_populates="attendance_records")
 
 
 class EventPhoto(Base):
@@ -86,6 +86,8 @@ class EventPhoto(Base):
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
 
     event = relationship("Event", back_populates="photos")
+    # explicit foreign_keys required — table has two FKs to users
+    uploader = relationship("User", foreign_keys=[uploaded_by])
 
 
 class EventFeedback(Base):
@@ -94,8 +96,9 @@ class EventFeedback(Base):
     id = Column(Integer, primary_key=True, index=True)
     event_id = Column(Integer, ForeignKey("events.id"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    rating = Column(Integer, nullable=False)        # 1–5
+    rating = Column(Integer, nullable=False)        # 1-5
     comment = Column(Text, nullable=True)
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
 
     event = relationship("Event", back_populates="feedback")
+    user = relationship("User", foreign_keys=[user_id])
