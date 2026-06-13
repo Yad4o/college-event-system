@@ -10,6 +10,9 @@ Club announcements:
 Platform-wide announcements (club_id IS NULL):
   - get_platform_announcements — any authenticated user
   - create_platform_announcement — college_admin only
+
+Phase 32 addition:
+  - create_announcement notifies all club members of the new post.
 """
 
 from fastapi import HTTPException, status
@@ -99,7 +102,7 @@ def get_club_announcements(
 def create_announcement(
     db: Session, club_id: int, data: AnnouncementCreate, current_user: User
 ) -> AnnouncementRead:
-    _assert_club_exists(db, club_id)
+    club = _assert_club_exists(db, club_id)
     _assert_president(db, current_user, club_id)
 
     ann = Announcement(
@@ -110,6 +113,23 @@ def create_announcement(
         is_pinned=data.is_pinned,
     )
     db.add(ann)
+    db.flush()  # get ann.id; flush so notifications are in same transaction
+
+    # Phase 32 — notify all club members of the new announcement
+    try:
+        member_ids = [
+            row.user_id
+            for row in db.query(ClubMembership.user_id)
+            .filter(ClubMembership.club_id == club_id)
+            .all()
+            if row.user_id != current_user.id  # no self-notification
+        ]
+        if member_ids:
+            from app.services.notification_service import notify_club_announcement
+            notify_club_announcement(db, member_ids, club.name, data.title, club_id)
+    except Exception:
+        pass  # notification failure must never abort the announcement creation
+
     db.commit()
     db.refresh(ann)
     return _to_read(ann)
