@@ -5,6 +5,7 @@ const NAV = [
   { to: '/', label: 'Dashboard' },
   { to: '/clubs', label: 'Clubs' },
   { to: '/events', label: 'Events' },
+  { to: '/profile', label: 'Profile' },
 ]
 
 export default function Navbar() {
@@ -19,7 +20,7 @@ export default function Navbar() {
           key={to}
           to={to}
           className={`text-sm font-medium transition-colors ${
-            pathname === to
+            pathname === to || (to !== '/' && pathname.startsWith(to))
               ? 'text-blue-600'
               : 'text-gray-500 hover:text-gray-800'
           }`}
