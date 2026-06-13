@@ -209,23 +209,38 @@ def rsvp(db: Session, event_id: int, current_user: User) -> RsvpRead:
             user_id=current_user.id,
             status=RSVPStatus.confirmed,
         )
+        waitlisted = False
     else:
-        # Seat limit reached — place on waitlist
-        waitlisted = count_waitlisted_rsvps(db, event_id)
+        waitlisted_count = count_waitlisted_rsvps(db, event_id)
         rsvp_row = EventRSVP(
             event_id=event_id,
             user_id=current_user.id,
             status=RSVPStatus.waitlisted,
-            waitlist_position=waitlisted + 1,
+            waitlist_position=waitlisted_count + 1,
         )
+        waitlisted = True
 
     db.add(rsvp_row)
     try:
-        db.commit()
+        db.flush()
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Already RSVPed")
 
+    # Notify user of their RSVP status (part of same transaction)
+    try:
+        from app.services.notification_service import (
+            notify_rsvp_confirmed,
+            notify_rsvp_waitlisted,
+        )
+        if waitlisted:
+            notify_rsvp_waitlisted(db, current_user.id, event.title, event_id)
+        else:
+            notify_rsvp_confirmed(db, current_user.id, event.title, event_id)
+    except Exception:
+        pass  # notification failure must never abort the RSVP
+
+    db.commit()
     db.refresh(rsvp_row)
     return RsvpRead.model_validate(rsvp_row)
 
@@ -243,14 +258,20 @@ def cancel_rsvp(db: Session, event_id: int, current_user: User) -> None:
     db.delete(rsvp_row)
     db.flush()
 
-    # Promote first waitlisted person if a confirmed slot just freed up
     if was_confirmed:
         next_up = get_first_waitlisted(db, event_id)
         if next_up:
             next_up.status = RSVPStatus.confirmed
             next_up.waitlist_position = None
 
-            # Dispatch promotion email (import here to avoid circular imports)
+            # Notify promoted user
+            try:
+                from app.services.notification_service import notify_waitlist_promoted
+                notify_waitlist_promoted(db, next_up.user_id, event.title, event_id)
+            except Exception:
+                pass
+
+            # Dispatch promotion email
             try:
                 from app.tasks.email import send_waitlist_promotion_email
                 send_waitlist_promotion_email.delay(
@@ -259,7 +280,6 @@ def cancel_rsvp(db: Session, event_id: int, current_user: User) -> None:
                     event_id,
                 )
             except Exception:
-                # Email failure must never block the cancellation
                 pass
 
     db.commit()
