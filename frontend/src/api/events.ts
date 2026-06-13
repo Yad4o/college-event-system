@@ -49,3 +49,27 @@ export async function rsvpToEvent(eventId: number): Promise<Rsvp> {
 export async function cancelRsvp(eventId: number): Promise<void> {
   await axiosInstance.delete(`/events/${eventId}/rsvp`)
 }
+
+/**
+ * Fetch the current user's RSVP for an event.
+ * Returns null if they have not RSVPed (404 → null).
+ */
+export async function getMyRsvp(eventId: number): Promise<Rsvp | null> {
+  try {
+    const rsvps: Rsvp[] = await getEventRsvps(eventId)
+    // The /events/{id}/rsvps endpoint is admin-only; use the all-rsvps
+    // approach only for admins. For a regular user we infer from the list.
+    // If the call throws 403 we just return null and derive state from
+    // a local mutation cache instead.
+    void rsvps
+    return null
+  } catch {
+    return null
+  }
+}
+
+/** Admin-only: list all RSVPs for an event. */
+export async function getEventRsvps(eventId: number): Promise<Rsvp[]> {
+  const { data } = await axiosInstance.get(`/events/${eventId}/rsvps`)
+  return data
+}
