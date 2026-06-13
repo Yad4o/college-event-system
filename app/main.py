@@ -15,6 +15,7 @@ from app.routers import (
     recruitment,
     budgets,
     sponsors,
+    notifications,
 )
 
 app = FastAPI(
@@ -43,9 +44,9 @@ app.include_router(announcements.router)
 app.include_router(recruitment.router)
 app.include_router(budgets.router)
 app.include_router(sponsors.router)
+app.include_router(notifications.router)
 
 
 @app.get("/health", tags=["Health"])
 def health_check():
     return {"status": "ok", "version": "1.0.0"}
-
