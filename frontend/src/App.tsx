@@ -9,6 +9,7 @@ import Events from './pages/Events'
 import EventDetail from './pages/EventDetail'
 import Profile from './pages/Profile'
 import Admin from './pages/Admin'
+import Notifications from './pages/Notifications'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/events" element={<Events />} />
           <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/admin" element={<Admin />} />
         </Route>
 
