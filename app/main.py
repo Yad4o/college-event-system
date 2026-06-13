@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import (
+    admin,
     auth,
     users,
     clubs,
@@ -47,6 +48,7 @@ app.include_router(budgets.router)
 app.include_router(sponsors.router)
 app.include_router(notifications.router)
 app.include_router(ws.router)
+app.include_router(admin.router)
 
 
 @app.get("/health", tags=["Health"])
