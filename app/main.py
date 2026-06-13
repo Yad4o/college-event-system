@@ -13,6 +13,7 @@ from app.routers import (
     badges,
     announcements,
     recruitment,
+    budgets,
 )
 
 app = FastAPI(
@@ -39,6 +40,7 @@ app.include_router(certificates.router)
 app.include_router(badges.router)
 app.include_router(announcements.router)
 app.include_router(recruitment.router)
+app.include_router(budgets.router)
 
 
 @app.get("/health", tags=["Health"])
