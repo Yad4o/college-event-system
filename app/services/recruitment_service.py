@@ -10,6 +10,7 @@ Student application:
 
 Status update (club president / college_admin):
   update_application_status — shortlisted | selected | rejected
+  Phase 32: fires notify_recruitment_update for the applicant.
 """
 
 from datetime import datetime, timezone
@@ -151,7 +152,6 @@ def apply(
             detail="Recruitment window has closed",
         )
 
-    # Validate answer count matches question count (if questions exist)
     q_count = len(drive.form_questions or [])
     if q_count and len(data.answers) != q_count:
         raise HTTPException(
@@ -184,7 +184,6 @@ def get_applications(
 ) -> list[ApplicationRead]:
     drive = _get_drive_or_404(db, drive_id)
 
-    # Club president / college_admin sees everyone; student sees only their own
     is_admin = current_user.role == UserRole.college_admin
     is_president = (
         db.query(ClubMembership)
@@ -232,6 +231,18 @@ def update_application_status(
     if data.reviewer_notes is not None:
         app_row.reviewer_notes = data.reviewer_notes
     app_row.reviewed_at = _now()
+
+    # Phase 32 — notify the applicant of their new status
+    try:
+        from app.services.notification_service import notify_recruitment_update
+        notify_recruitment_update(
+            db,
+            user_id=app_row.applicant_id,
+            drive_title=drive.title,
+            new_status=data.status.value,
+        )
+    except Exception:
+        pass  # notification failure must never abort the status update
 
     db.commit()
     db.refresh(app_row)
