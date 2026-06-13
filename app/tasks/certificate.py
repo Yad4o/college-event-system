@@ -1,5 +1,6 @@
 """
 Celery task: generate a PDF certificate and upload it to Cloudinary.
+Phase 32: notify the user in-app once the PDF is available.
 """
 
 import secrets
@@ -15,9 +16,8 @@ def generate_certificate_pdf(self, certificate_id: int) -> None:
     2. Render PDF with WeasyPrint.
     3. Upload to Cloudinary (folder: certificates/).
     4. Persist the secure URL back to the Certificate row.
+    5. (Phase 32) Create an in-app notification for the user.
     """
-    # Deferred imports keep the module importable even when DB / Cloudinary
-    # are not yet configured (e.g. during unit tests that mock the task).
     from sqlalchemy.orm import Session
     from app.database import SessionLocal
     from app.models.certificate import Certificate
@@ -55,11 +55,17 @@ def generate_certificate_pdf(self, certificate_id: int) -> None:
             )
             cert.pdf_url = result.get("secure_url")
         except Exception as upload_err:
-            # Log but do not retry for Cloudinary config issues in dev
             import logging
             logging.getLogger(__name__).warning(
                 "Cloudinary upload failed for cert %s: %s", certificate_id, upload_err
             )
+
+        # Phase 32 — in-app notification now that the PDF URL is set
+        try:
+            from app.services.notification_service import notify_certificate_ready
+            notify_certificate_ready(db, user.id, event.title, cert.unique_code)
+        except Exception:
+            pass  # notification failure must never abort the task
 
         db.commit()
     except Exception as exc:
