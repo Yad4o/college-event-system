@@ -8,6 +8,7 @@ import ClubDetail from './pages/ClubDetail'
 import Events from './pages/Events'
 import EventDetail from './pages/EventDetail'
 import Profile from './pages/Profile'
+import Admin from './pages/Admin'
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/events" element={<Events />} />
           <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/admin" element={<Admin />} />
         </Route>
 
         {/* Fallback */}
