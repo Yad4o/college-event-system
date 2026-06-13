@@ -1,16 +1,19 @@
 """
-Notification service — Phase 32.
+Notification service — Phase 32 / 34.
 
 create_notification() is the single internal entry-point used by every other
-module to insert a Notification row and (in Phase 34) push it over WebSocket.
+module to insert a Notification row and push it over WebSocket (Phase 34).
 
 Convenience wrappers keep call-sites clean:
   notify_rsvp_confirmed(db, user_id, event_title, event_id)
   notify_rsvp_waitlisted(db, user_id, event_title, event_id)
+  notify_waitlist_promoted(db, user_id, event_title, event_id)
   notify_certificate_ready(db, user_id, event_title, cert_code)
   notify_recruitment_update(db, user_id, drive_title, new_status)
   notify_club_announcement(db, user_ids, club_name, ann_title, club_id)
 """
+
+import asyncio
 
 from sqlalchemy.orm import Session
 
@@ -26,10 +29,14 @@ def create_notification(
     link_url: str | None = None,
 ) -> Notification:
     """
-    Insert a Notification row for *user_id* and return it.
+    Insert a Notification row for *user_id* and schedule a WebSocket push.
 
-    Phase 34 will add: await manager.send_to_user(user_id, payload)
-    That hook lives here so callers never need to change.
+    The DB flush is done here so the notification is part of the same atomic
+    transaction as the parent action.  The caller is responsible for db.commit().
+
+    The WebSocket push is scheduled as a fire-and-forget asyncio task so it
+    never blocks the HTTP response path and never raises to the caller even
+    if no socket is connected.
     """
     notif = Notification(
         user_id=user_id,
@@ -39,9 +46,32 @@ def create_notification(
         link_url=link_url,
     )
     db.add(notif)
-    # Caller is responsible for db.commit() — we only flush here so the
-    # notification is part of the same atomic transaction as the parent action.
-    db.flush()
+    db.flush()  # populate notif.id without committing
+
+    # Phase 34 — push over WebSocket (best-effort, never raises)
+    try:
+        from app.utils.ws_manager import manager
+
+        if manager.is_connected(user_id):
+            payload = {
+                "type": "notification",
+                "id": notif.id,
+                "notification_type": notification_type.value,
+                "title": title,
+                "message": message,
+                "link_url": link_url,
+                "is_read": False,
+            }
+            # Schedule without awaiting so sync callers work fine
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(manager.send_to_user(user_id, payload))
+            except RuntimeError:
+                # No running event loop (e.g. Celery worker thread) — skip push
+                pass
+    except Exception:
+        pass  # WS push failure must never affect the DB transaction
+
     return notif
 
 
@@ -114,7 +144,7 @@ def notify_recruitment_update(
 def notify_club_announcement(
     db: Session, user_ids: list[int], club_name: str, ann_title: str, club_id: int
 ) -> None:
-    """Batch-insert one notification per member."""
+    """Batch-insert one notification per member and push each over WebSocket."""
     for uid in user_ids:
         create_notification(
             db,
