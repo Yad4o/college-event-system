@@ -193,7 +193,7 @@ export default function Notifications() {
   const unreadCount = notifications?.filter((n) => !n.is_read).length ?? 0
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen board-bg">
       <Navbar />
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex items-start justify-between gap-4 mb-6">
