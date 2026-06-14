@@ -52,7 +52,7 @@ export default function Register() {
       } else if (resp?.status === 403) {
         setError(resp.data?.detail ?? 'Invalid admin registration code.')
       } else if (resp?.status === 422) {
-        setError('Check your details — something doesn't look right.')
+        setError("Check your details — something doesn't look right.")
       } else {
         setError('Something went wrong. Try again in a moment.')
       }

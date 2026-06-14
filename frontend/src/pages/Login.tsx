@@ -27,7 +27,7 @@ export default function Login() {
     } catch (err: unknown) {
       const status = (err as { response?: { status: number } })?.response?.status
       if (status === 401) {
-        setError('That email and password don't match.')
+        setError("That email and password don't match.")
       } else if (status === 403) {
         setError('This account is disabled. Contact your college admin.')
       } else {
