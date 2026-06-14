@@ -10,6 +10,7 @@ export interface Club {
   is_active: boolean
   is_suspended: boolean
   member_count: number
+  my_role?: string
 }
 
 export interface Membership {

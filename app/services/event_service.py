@@ -46,6 +46,7 @@ def _to_read(db: Session, event: Event) -> EventRead:
         qr_token=event.qr_token,
         rsvp_count=rsvp_count,
         waitlist_count=waitlist_count,
+        is_approved=event.is_approved,
     )
 
 
@@ -93,8 +94,21 @@ def get_events(
     limit: int = 20,
     club_id: int | None = None,
     tags: list[str] | None = None,
+    current_user: User | None = None,
 ) -> list[EventRead]:
-    events = _get_events(db, skip=skip, limit=limit, club_id=club_id, tags=tags)
+    is_approved = True
+    if current_user and current_user.role == UserRole.college_admin:
+        is_approved = None
+    elif current_user and club_id:
+        membership = (
+            db.query(ClubMembership)
+            .filter(ClubMembership.user_id == current_user.id, ClubMembership.club_id == club_id)
+            .first()
+        )
+        if membership and membership.role in [ClubMemberRole.president, ClubMemberRole.core_member]:
+            is_approved = None
+
+    events = _get_events(db, skip=skip, limit=limit, club_id=club_id, tags=tags, is_approved=is_approved)
     return [_to_read(db, e) for e in events]
 
 
@@ -115,6 +129,7 @@ def create_event(
 
     poster_url = _upload_poster(poster_bytes)
 
+    is_admin = current_user.role == UserRole.college_admin
     event = Event(
         club_id=data.club_id,
         title=data.title,
@@ -127,6 +142,7 @@ def create_event(
         end_at=data.end_at,
         seat_limit=data.seat_limit,
         is_hidden=data.is_hidden,
+        is_approved=is_admin,
     )
     db.add(event)
     db.flush()  # need event.id before generating the QR token
@@ -295,3 +311,27 @@ def list_rsvps(db: Session, event_id: int, current_user: User) -> list[RsvpRead]
 
     rows = db.query(EventRSVP).filter(EventRSVP.event_id == event_id).all()
     return [RsvpRead.model_validate(r) for r in rows]
+def approve_event(db: Session, event_id: int, current_user: User) -> EventRead:
+    if current_user.role != UserRole.college_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+    
+    event = get_event_by_id(db, event_id)
+    if not event:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+        
+    event.is_approved = True
+    db.commit()
+    db.refresh(event)
+    return _to_read(db, event)
+
+
+def reject_event(db: Session, event_id: int, current_user: User) -> None:
+    if current_user.role != UserRole.college_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        
+    event = get_event_by_id(db, event_id)
+    if not event:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+        
+    db.delete(event)
+    db.commit()

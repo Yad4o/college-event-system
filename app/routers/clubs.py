@@ -16,9 +16,9 @@ def list_clubs(
     limit: int = Query(20, ge=1, le=100),
     domain: str | None = Query(None),
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    return club_service.get_clubs(db, skip=skip, limit=limit, domain=domain)
+    return club_service.get_clubs(db, skip=skip, limit=limit, domain=domain, current_user=current_user)
 
 
 @router.post("", response_model=ClubRead, status_code=201)
@@ -34,9 +34,9 @@ def create_club(
 def get_club(
     club_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    return club_service.get_club(db, club_id)
+    return club_service.get_club(db, club_id, current_user)
 
 
 @router.patch("/{club_id}", response_model=ClubRead)

@@ -22,6 +22,7 @@ class ClubRead(BaseModel):
     is_active: bool
     is_suspended: bool
     member_count: int = 0
+    my_role: ClubMemberRole | None = None
 
     model_config = {"from_attributes": True}
 

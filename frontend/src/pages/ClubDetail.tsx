@@ -87,7 +87,7 @@ export default function ClubDetail() {
     )
   }
 
-  const canPostEvents = me?.role === 'college_admin' || me?.role === 'club_admin'
+  const canPostEvents = me?.role === 'college_admin' || club?.my_role === 'president' || club?.my_role === 'core_member'
 
   return (
     <div className="min-h-screen board-bg">
@@ -190,6 +190,11 @@ export default function ClubDetail() {
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-ink group-hover:text-rust transition-colors truncate">
                         {ev.title}
+                        {!ev.is_approved && (
+                          <span className="ml-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-gold/15 text-[#9c6a1f] rounded-full">
+                            Pending Approval
+                          </span>
+                        )}
                       </p>
                       <p className="text-xs text-ink/40 mt-0.5 font-mono">
                         {formatDate(ev.start_at)}{ev.venue ? ` · ${ev.venue}` : ''}

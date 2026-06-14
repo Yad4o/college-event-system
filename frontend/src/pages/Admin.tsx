@@ -20,7 +20,7 @@ import {
   type NewClubApplication,
 } from '../api/club_applications'
 
-type Tab = 'overview' | 'applications' | 'users' | 'clubs' | 'budget'
+type Tab = 'overview' | 'applications' | 'users' | 'clubs' | 'budget' | 'events'
 
 const ROLES = ['student', 'club_admin', 'faculty_advisor', 'college_admin']
 
@@ -525,6 +525,99 @@ function BudgetTab() {
   )
 }
 
+// ── Events tab (Approvals) ────────────────────────────────────────────────────────
+import { getEvents, approveEvent, rejectEvent, type Event } from '../api/events'
+
+function EventsTab() {
+  const qc = useQueryClient()
+  const [actionError, setActionError] = useState('')
+
+  const { data: events, isLoading, isError } = useQuery({
+    queryKey: ['admin-events'],
+    queryFn: () => getEvents({ limit: 100 }),
+  })
+
+  const pendingEvents = events?.filter(e => !e.is_approved) ?? []
+
+  const approveMut = useMutation({
+    mutationFn: (eventId: number) => approveEvent(eventId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-events'] })
+      setActionError('')
+    },
+    onError: () => setActionError('Failed to approve event.'),
+  })
+
+  const rejectMut = useMutation({
+    mutationFn: (eventId: number) => rejectEvent(eventId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-events'] })
+      setActionError('')
+    },
+    onError: () => setActionError('Failed to reject event.'),
+  })
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2 animate-pulse">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-12 bg-ink/5 rounded-lg" />
+        ))}
+      </div>
+    )
+  }
+
+  if (isError) return <EmptyState tone="error" title="Failed to load events" />
+
+  return (
+    <div>
+      {actionError && <p className="mb-3 text-sm text-alert">{actionError}</p>}
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left border-b border-dashed border-ink/10">
+              <th className="pb-2 pr-4 stamp-label text-ink/35">Event</th>
+              <th className="pb-2 pr-4 stamp-label text-ink/35">Club ID</th>
+              <th className="pb-2 pr-4 stamp-label text-ink/35">Start</th>
+              <th className="pb-2 stamp-label text-ink/35">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pendingEvents.map((ev: Event) => (
+              <tr key={ev.id} className="border-b border-dashed border-ink/5 last:border-0">
+                <td className="py-3 pr-4 font-medium text-ink">{ev.title}</td>
+                <td className="py-3 pr-4 text-ink/50 font-mono">#{ev.club_id}</td>
+                <td className="py-3 pr-4 text-ink/50 font-mono">
+                  {new Date(ev.start_at).toLocaleString()}
+                </td>
+                <td className="py-3">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => approveMut.mutate(ev.id)}
+                      disabled={approveMut.isPending}
+                      className="text-xs px-3 py-1.5 rounded bg-pine text-white font-display font-semibold hover:bg-pine/90 disabled:opacity-50"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => rejectMut.mutate(ev.id)}
+                      disabled={rejectMut.isPending}
+                      className="text-xs px-3 py-1.5 rounded border border-alert/30 text-alert font-display font-semibold hover:bg-alert/5 disabled:opacity-50"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {pendingEvents.length === 0 && <EmptyState title="No pending events" />}
+      </div>
+    </div>
+  )
+}
+
 // ── Main Admin page ────────────────────────────────────────────────────────────
 
 const TABS: { id: Tab; label: string }[] = [
@@ -533,6 +626,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'users',        label: 'Users' },
   { id: 'clubs',        label: 'Clubs' },
   { id: 'budget',       label: 'Budget' },
+  { id: 'events',       label: 'Events' },
 ]
 
 export default function Admin() {
@@ -581,6 +675,7 @@ export default function Admin() {
           {tab === 'users'        && <UsersTab />}
           {tab === 'clubs'        && <ClubsTab />}
           {tab === 'budget'       && <BudgetTab />}
+          {tab === 'events'       && <EventsTab />}
         </Card>
       </div>
     </div>

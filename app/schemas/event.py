@@ -15,6 +15,7 @@ class EventCreate(BaseModel):
     end_at: datetime | None = None
     seat_limit: int | None = None
     is_hidden: bool = False
+    is_approved: bool | None = None
 
     @model_validator(mode="after")
     def end_after_start(self):
@@ -37,6 +38,7 @@ class EventRead(BaseModel):
     seat_limit: int | None = None
     is_cancelled: bool
     is_hidden: bool
+    is_approved: bool
     qr_token: str | None = None
     rsvp_count: int = 0
     waitlist_count: int = 0
@@ -52,6 +54,7 @@ class EventUpdate(BaseModel):
     end_at: datetime | None = None
     seat_limit: int | None = None
     is_hidden: bool | None = None
+    is_approved: bool | None = None
     is_cancelled: bool | None = None
     tags: list[str] | None = None
 

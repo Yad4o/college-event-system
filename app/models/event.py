@@ -33,6 +33,7 @@ class Event(Base):
     seat_limit = Column(Integer, nullable=True)     # None = unlimited
     is_cancelled = Column(Boolean, default=False)
     is_hidden = Column(Boolean, default=False)
+    is_approved = Column(Boolean, default=False)
     qr_token = Column(String, nullable=True, unique=True)   # signed token for QR attendance
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

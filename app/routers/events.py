@@ -19,9 +19,9 @@ def list_events(
     club_id: int | None = Query(None),
     tags: list[str] | None = Query(None),
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    return event_service.get_events(db, skip=skip, limit=limit, club_id=club_id, tags=tags)
+    return event_service.get_events(db, skip=skip, limit=limit, club_id=club_id, tags=tags, current_user=current_user)
 
 
 @router.post("", response_model=EventRead, status_code=201)
@@ -68,6 +68,24 @@ def delete_event(
     current_user: User = Depends(get_current_user),
 ):
     event_service.delete_event(db, event_id, current_user)
+
+
+@router.patch("/{event_id}/approve", response_model=EventRead)
+def approve_event(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return event_service.approve_event(db, event_id, current_user)
+
+
+@router.patch("/{event_id}/reject", status_code=204)
+def reject_event(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    event_service.reject_event(db, event_id, current_user)
 
 
 # ── RSVP ─────────────────────────────────────────────────────────────────────

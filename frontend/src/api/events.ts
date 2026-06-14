@@ -13,6 +13,7 @@ export interface Event {
   seat_limit?: number
   is_hidden: boolean
   is_cancelled: boolean
+  is_approved: boolean
   rsvp_count: number
   waitlist_count: number
 }
@@ -72,4 +73,13 @@ export async function cancelRsvp(eventId: number): Promise<void> {
 export async function getEventRsvps(eventId: number): Promise<Rsvp[]> {
   const { data } = await axiosInstance.get(`/events/${eventId}/rsvps`)
   return data
+}
+
+export async function approveEvent(eventId: number): Promise<Event> {
+  const { data } = await axiosInstance.patch(`/events/${eventId}/approve`)
+  return data
+}
+
+export async function rejectEvent(eventId: number): Promise<void> {
+  await axiosInstance.patch(`/events/${eventId}/reject`)
 }

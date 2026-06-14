@@ -24,8 +24,14 @@ from app.utils.club_repo import (
 )
 
 
-def _to_read(db: Session, club: Club) -> ClubRead:
+def _to_read(db: Session, club: Club, current_user: User | None = None) -> ClubRead:
     count = get_member_count(db, club.id)
+    my_role = None
+    if current_user:
+        membership = get_membership(db, current_user.id, club.id)
+        if membership:
+            my_role = membership.role
+            
     return ClubRead(
         id=club.id,
         name=club.name,
@@ -36,6 +42,7 @@ def _to_read(db: Session, club: Club) -> ClubRead:
         is_active=club.is_active,
         is_suspended=club.is_suspended,
         member_count=count,
+        my_role=my_role,
     )
 
 
@@ -47,22 +54,22 @@ def _assert_club_admin(db: Session, user: User, club_id: int) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
 
 
-def get_clubs(db: Session, skip: int = 0, limit: int = 20, domain: str | None = None) -> list[ClubRead]:
-    return [_to_read(db, c) for c in _get_clubs(db, skip=skip, limit=limit, domain=domain)]
+def get_clubs(db: Session, skip: int = 0, limit: int = 20, domain: str | None = None, current_user: User | None = None) -> list[ClubRead]:
+    return [_to_read(db, c, current_user) for c in _get_clubs(db, skip=skip, limit=limit, domain=domain)]
 
 
-def get_club(db: Session, club_id: int) -> ClubRead:
+def get_club(db: Session, club_id: int, current_user: User | None = None) -> ClubRead:
     club = get_club_by_id(db, club_id)
     if not club or not club.is_active:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Club not found")
-    return _to_read(db, club)
+    return _to_read(db, club, current_user)
 
 
 def create_club(db: Session, data: ClubCreate, current_user: User) -> ClubRead:
     if current_user.role != UserRole.college_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
     club = _create_club(db, data, current_user.id)
-    return _to_read(db, club)
+    return _to_read(db, club, current_user)
 
 
 def update_club(db: Session, club_id: int, data: ClubUpdate, current_user: User) -> ClubRead:
@@ -74,7 +81,7 @@ def update_club(db: Session, club_id: int, data: ClubUpdate, current_user: User)
         setattr(club, field, value)
     db.commit()
     db.refresh(club)
-    return _to_read(db, club)
+    return _to_read(db, club, current_user)
 
 
 def suspend_club(db: Session, club_id: int, current_user: User) -> ClubRead:
@@ -86,7 +93,7 @@ def suspend_club(db: Session, club_id: int, current_user: User) -> ClubRead:
     club.is_suspended = not club.is_suspended
     db.commit()
     db.refresh(club)
-    return _to_read(db, club)
+    return _to_read(db, club, current_user)
 
 
 def delete_club(db: Session, club_id: int, current_user: User) -> None:

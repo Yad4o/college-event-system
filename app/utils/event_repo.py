@@ -14,11 +14,14 @@ def get_events(
     limit: int = 20,
     club_id: int | None = None,
     tags: list[str] | None = None,
+    is_approved: bool | None = True,
 ) -> list[Event]:
     q = db.query(Event).filter(
         Event.is_cancelled == False,
         Event.is_hidden == False,
     )
+    if is_approved is not None:
+        q = q.filter(Event.is_approved == is_approved)
     if club_id:
         q = q.filter(Event.club_id == club_id)
     if tags:
