@@ -547,7 +547,7 @@ export default function Admin() {
   const pendingCount = pending?.length ?? 0
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen board-bg">
       <Navbar />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <p className="stamp-label text-rust mb-1">Platform control</p>
