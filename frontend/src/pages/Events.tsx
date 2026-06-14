@@ -175,7 +175,7 @@ export default function Events() {
             message={
               filter === 'upcoming'
                 ? 'No upcoming events right now — switch to "All" to see past events, or check back soon.'
-                : 'Once a club pins an event here, it\\'ll show up for everyone.'
+                : 'Once a club pins an event here, it'll show up for everyone.'
             }
             icon={
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
