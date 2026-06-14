@@ -53,7 +53,7 @@ export default function ClubDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-paper">
+      <div className="min-h-screen board-bg">
         <Navbar />
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 animate-pulse space-y-4">
           <div className="h-8 bg-ink/5 rounded w-1/3" />
@@ -65,7 +65,7 @@ export default function ClubDetail() {
 
   if (isError || !club) {
     return (
-      <div className="min-h-screen bg-paper">
+      <div className="min-h-screen board-bg">
         <Navbar />
         <EmptyState
           tone="error"
@@ -90,7 +90,7 @@ export default function ClubDetail() {
   const canPostEvents = me?.role === 'college_admin' || me?.role === 'club_admin'
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen board-bg">
       <Navbar />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <Link to="/clubs" className="text-sm text-ink/40 hover:text-ink mb-4 inline-flex items-center gap-1 transition-colors">
