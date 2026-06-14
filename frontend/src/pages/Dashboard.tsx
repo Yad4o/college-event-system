@@ -7,12 +7,11 @@ import { getClubs, type Club } from '../api/clubs'
 import { getNotifications, type Notification } from '../api/notifications'
 import { getStats, type DashboardStats } from '../api/admin'
 import Navbar from '../components/Navbar'
+import Seal from '../components/Seal'
+import EmptyState from '../components/EmptyState'
 
-// ── helpers ───────────────────────────────────────────────────────────────────
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-IN', {
-    weekday: 'short', day: 'numeric', month: 'short',
-  })
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
 }
 
 function timeAgo(iso: string) {
@@ -25,12 +24,11 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`
 }
 
-// ── sub-components ────────────────────────────────────────────────────────────
 function SectionHeader({ title, to, linkLabel }: { title: string; to: string; linkLabel: string }) {
   return (
     <div className="flex items-center justify-between mb-3">
-      <h2 className="font-semibold text-gray-700 text-base">{title}</h2>
-      <Link to={to} className="text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors">
+      <p className="stamp-label text-rust">{title}</p>
+      <Link to={to} className="text-xs font-display font-semibold text-ink/40 hover:text-rust transition-colors">
         {linkLabel} →
       </Link>
     </div>
@@ -39,13 +37,13 @@ function SectionHeader({ title, to, linkLabel }: { title: string; to: string; li
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="pin-card rounded-2xl border border-ink/5 shadow-pin p-5 pt-7">
       {children}
     </div>
   )
 }
 
-// ── Upcoming RSVPs ─────────────────────────────────────────────────────────────
+// ── Upcoming Events ────────────────────────────────────────────────────────
 function UpcomingEvents() {
   const { data: events, isLoading } = useQuery({
     queryKey: ['events', { limit: 50 }],
@@ -54,53 +52,57 @@ function UpcomingEvents() {
 
   const upcoming = events
     ?.filter((e: Event) => !e.is_cancelled && new Date(e.start_at) > new Date())
+    .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime())
     .slice(0, 4)
 
   return (
     <Card>
-      <SectionHeader title="Upcoming Events" to="/events" linkLabel="All events" />
+      <SectionHeader title="What's coming up" to="/events" linkLabel="All events" />
       {isLoading && (
         <div className="space-y-3 animate-pulse">
           {[1, 2, 3].map(i => (
             <div key={i} className="flex gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0" />
+              <div className="w-11 h-11 rounded-lg bg-ink/5 flex-shrink-0" />
               <div className="flex-1 space-y-1.5 py-0.5">
-                <div className="h-3.5 bg-gray-100 rounded w-3/4" />
-                <div className="h-3 bg-gray-100 rounded w-1/2" />
+                <div className="h-3.5 bg-ink/5 rounded w-3/4" />
+                <div className="h-3 bg-ink/5 rounded w-1/2" />
               </div>
             </div>
           ))}
         </div>
       )}
       {!isLoading && (!upcoming || upcoming.length === 0) && (
-        <p className="text-sm text-gray-400 py-2">No upcoming events. <Link to="/events" className="text-blue-500">Browse events</Link></p>
+        <EmptyState
+          title="Nothing pinned yet"
+          message="No upcoming events right now."
+          action={<Link to="/events" className="text-sm font-display font-semibold text-rust hover:underline">Browse events</Link>}
+        />
       )}
       {upcoming && upcoming.length > 0 && (
-        <ul className="divide-y divide-gray-50">
+        <ul className="divide-y divide-dashed divide-ink/10">
           {upcoming.map((ev: Event) => (
             <li key={ev.id}>
               <Link
                 to={`/events/${ev.id}`}
                 className="flex items-center gap-3 py-2.5 group"
               >
-                {/* Date block */}
-                <div className="w-10 h-10 rounded-lg bg-blue-50 flex flex-col items-center justify-center flex-shrink-0">
-                  <span className="text-[10px] font-semibold text-blue-400 uppercase leading-none">
+                <div className="w-11 h-11 rounded-lg bg-ink flex flex-col items-center justify-center flex-shrink-0">
+                  <span className="text-[9px] font-semibold text-paper/50 uppercase leading-none stamp-label">
                     {new Date(ev.start_at).toLocaleDateString('en-IN', { month: 'short' })}
                   </span>
-                  <span className="text-base font-bold text-blue-600 leading-none">
+                  <span className="text-lg font-display font-bold text-paper leading-none mt-0.5">
                     {new Date(ev.start_at).getDate()}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate group-hover:text-blue-600 transition-colors">
+                  <p className="text-sm font-medium text-ink truncate group-hover:text-rust transition-colors">
                     {ev.title}
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {formatDate(ev.start_at)}{ev.venue ? ` · ${ev.venue}` : ''}
+                  <p className="text-xs text-ink/40 mt-0.5 font-mono">
+                    {formatTime(ev.start_at)}{ev.venue ? ` · ${ev.venue}` : ''}
                   </p>
                 </div>
-                <span className="text-xs text-gray-300 flex-shrink-0">→</span>
+                <span className="text-xs text-ink/30 flex-shrink-0">→</span>
               </Link>
             </li>
           ))}
@@ -110,7 +112,7 @@ function UpcomingEvents() {
   )
 }
 
-// ── My Clubs ──────────────────────────────────────────────────────────────────
+// ── Clubs ──────────────────────────────────────────────────────────────────
 function MyClubs() {
   const { data: clubs, isLoading } = useQuery({
     queryKey: ['clubs', {}],
@@ -121,44 +123,42 @@ function MyClubs() {
 
   return (
     <Card>
-      <SectionHeader title="Clubs" to="/clubs" linkLabel="All clubs" />
+      <SectionHeader title="Clubs on the board" to="/clubs" linkLabel="All clubs" />
       {isLoading && (
         <div className="space-y-3 animate-pulse">
           {[1, 2].map(i => (
             <div key={i} className="flex gap-3 items-center">
-              <div className="w-8 h-8 rounded-lg bg-gray-100 flex-shrink-0" />
-              <div className="h-3.5 bg-gray-100 rounded w-1/2" />
+              <div className="w-9 h-9 rounded-full bg-ink/5 flex-shrink-0" />
+              <div className="h-3.5 bg-ink/5 rounded w-1/2" />
             </div>
           ))}
         </div>
       )}
       {!isLoading && (!shown || shown.length === 0) && (
-        <p className="text-sm text-gray-400 py-2">No clubs yet. <Link to="/clubs" className="text-blue-500">Browse clubs</Link></p>
+        <EmptyState
+          title="No clubs yet"
+          message="Be the first to pitch one."
+          action={<Link to="/clubs" className="text-sm font-display font-semibold text-rust hover:underline">Browse clubs</Link>}
+        />
       )}
       {shown && shown.length > 0 && (
-        <ul className="divide-y divide-gray-50">
+        <ul className="divide-y divide-dashed divide-ink/10">
           {shown.map((c: Club) => (
             <li key={c.id}>
               <Link
                 to={`/clubs/${c.id}`}
                 className="flex items-center gap-3 py-2.5 group"
               >
-                {c.logo_url ? (
-                  <img src={c.logo_url} alt={c.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                ) : (
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-blue-600 font-bold text-xs">{c.name.charAt(0)}</span>
-                  </div>
-                )}
+                <Seal name={c.name} logoUrl={c.logo_url} size="sm" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate group-hover:text-blue-600 transition-colors">
+                  <p className="text-sm font-medium text-ink truncate group-hover:text-rust transition-colors">
                     {c.name}
                   </p>
                   {c.domain && (
-                    <p className="text-xs text-gray-400 capitalize">{c.domain}</p>
+                    <p className="text-xs text-ink/40 capitalize">{c.domain}</p>
                   )}
                 </div>
-                <span className="text-xs text-gray-300 flex-shrink-0">→</span>
+                <span className="text-xs text-ink/30 flex-shrink-0">→</span>
               </Link>
             </li>
           ))}
@@ -168,11 +168,11 @@ function MyClubs() {
   )
 }
 
-// ── Recent Notifications ───────────────────────────────────────────────────────
+// ── Recent Notifications ───────────────────────────────────────────────────
 function RecentNotifications() {
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['notifications'],
-    queryFn: () => import('../api/notifications').then(m => m.getNotifications()),
+    queryFn: getNotifications,
   })
 
   const recent = notifications?.slice(0, 4)
@@ -181,7 +181,7 @@ function RecentNotifications() {
   return (
     <Card>
       <SectionHeader
-        title={`Notifications${unread > 0 ? ` (${unread} new)` : ''}`}
+        title={unread > 0 ? `Notifications · ${unread} new` : 'Notifications'}
         to="/notifications"
         linkLabel="See all"
       />
@@ -189,30 +189,25 @@ function RecentNotifications() {
         <div className="space-y-3 animate-pulse">
           {[1, 2, 3].map(i => (
             <div key={i} className="space-y-1.5">
-              <div className="h-3.5 bg-gray-100 rounded w-3/4" />
-              <div className="h-3 bg-gray-100 rounded w-1/2" />
+              <div className="h-3.5 bg-ink/5 rounded w-3/4" />
+              <div className="h-3 bg-ink/5 rounded w-1/2" />
             </div>
           ))}
         </div>
       )}
       {!isLoading && (!recent || recent.length === 0) && (
-        <p className="text-sm text-gray-400 py-2">No notifications yet.</p>
+        <EmptyState title="All quiet" message="Nothing new to report." />
       )}
       {recent && recent.length > 0 && (
-        <ul className="divide-y divide-gray-50">
+        <ul className="divide-y divide-dashed divide-ink/10">
           {recent.map((n: Notification) => (
             <li key={n.id} className="py-2.5 flex items-start gap-2">
-              {!n.is_read && (
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-              )}
-              {n.is_read && (
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" />
-              )}
+              <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${n.is_read ? 'bg-transparent' : 'bg-rust'}`} />
               <div className="flex-1 min-w-0">
-                <p className={`text-sm truncate ${n.is_read ? 'text-gray-500' : 'text-gray-800 font-medium'}`}>
+                <p className={`text-sm truncate ${n.is_read ? 'text-ink/50' : 'text-ink font-medium'}`}>
                   {n.title}
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">{timeAgo(n.created_at)}</p>
+                <p className="text-xs text-ink/35 mt-0.5 font-mono">{timeAgo(n.created_at)}</p>
               </div>
             </li>
           ))}
@@ -222,7 +217,7 @@ function RecentNotifications() {
   )
 }
 
-// ── Admin Stats strip (college_admin only) ────────────────────────────────────
+// ── Admin strip ───────────────────────────────────────────────────────────
 function AdminStrip() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin-stats'],
@@ -236,8 +231,8 @@ function AdminStrip() {
   const s: DashboardStats = data
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Platform overview</p>
+    <div className="pin-card rounded-2xl border border-ink/5 shadow-pin p-5 pt-7 mb-6">
+      <p className="stamp-label text-rust mb-3">Platform overview</p>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: 'Users',          value: s.total_users },
@@ -246,8 +241,8 @@ function AdminStrip() {
           { label: 'Certificates',   value: s.total_certificates_issued },
         ].map(({ label, value }) => (
           <div key={label}>
-            <p className="text-2xl font-bold text-gray-800">{value.toLocaleString()}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+            <p className="text-2xl font-display font-bold text-ink">{value.toLocaleString()}</p>
+            <p className="text-xs text-ink/40 mt-0.5">{label}</p>
           </div>
         ))}
       </div>
@@ -255,7 +250,7 @@ function AdminStrip() {
   )
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const { data: me, isLoading: meLoading } = useQuery({
     queryKey: ['me'],
@@ -271,31 +266,26 @@ export default function Dashboard() {
   })()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-paper">
       <Navbar />
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {/* Greeting */}
         <div className="mb-6">
           {meLoading ? (
             <div className="animate-pulse space-y-2">
-              <div className="h-7 bg-gray-100 rounded w-1/3" />
-              <div className="h-4 bg-gray-100 rounded w-1/4" />
+              <div className="h-8 bg-ink/5 rounded w-1/3" />
+              <div className="h-4 bg-ink/5 rounded w-1/4" />
             </div>
           ) : (
             <>
-              <h1 className="text-2xl font-bold text-gray-800">
+              <p className="stamp-label text-rust mb-1">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+              <h1 className="text-2xl sm:text-3xl font-display font-bold text-ink">
                 {greeting}{me ? `, ${me.full_name.split(' ')[0]}` : ''}
               </h1>
-              <p className="text-sm text-gray-400 mt-0.5">
-                {new Date().toLocaleDateString('en-IN', {
-                  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-                })}
-              </p>
             </>
           )}
         </div>
 
-        {/* Admin stats strip — only renders if user is college_admin */}
         {isAdmin && <AdminStrip />}
 
         {/* Main grid */}
@@ -307,21 +297,20 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Quick links footer */}
+        {/* Quick links */}
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { to: '/clubs',         label: 'Browse clubs',    emoji: '🏛️' },
-            { to: '/events',        label: 'Find events',     emoji: '📅' },
-            { to: '/notifications', label: 'Notifications',   emoji: '🔔' },
-            { to: '/profile',       label: 'Your profile',    emoji: '👤' },
-          ].map(({ to, label, emoji }) => (
+            { to: '/clubs',         label: 'Browse clubs' },
+            { to: '/events',        label: 'Find events' },
+            { to: '/notifications', label: 'Notifications' },
+            { to: '/profile',       label: 'Your profile' },
+          ].map(({ to, label }) => (
             <Link
               key={to}
               to={to}
-              className="flex items-center gap-2 bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 text-sm font-medium text-gray-600 hover:shadow-md hover:text-blue-600 transition-all"
+              className="bg-white rounded-xl border border-ink/5 shadow-pin px-4 py-3 text-sm font-display font-semibold text-ink/60 hover:text-rust hover:border-rust/20 hover:shadow-pin-hover transition-all"
             >
-              <span>{emoji}</span>
-              <span>{label}</span>
+              {label}
             </Link>
           ))}
         </div>
