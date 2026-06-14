@@ -9,6 +9,8 @@ export default function Register() {
     email: '',
     full_name: '',
     password: '',
+    role: 'student' as 'student' | 'college_admin',
+    admin_code: '',
     branch: '',
     year: '',
   })
@@ -31,6 +33,8 @@ export default function Register() {
         email: form.email,
         full_name: form.full_name,
         password: form.password,
+        role: form.role as 'student' | 'college_admin',
+        admin_code: form.role === 'college_admin' ? form.admin_code || undefined : undefined,
         branch: form.branch || undefined,
         year: form.year ? parseInt(form.year, 10) : undefined,
       })
@@ -66,6 +70,48 @@ export default function Register() {
               { label: 'Full name', field: 'full_name', type: 'text', placeholder: 'Jane Doe' },
               { label: 'Email', field: 'email', type: 'email', placeholder: 'you@college.edu' },
               { label: 'Password', field: 'password', type: 'password', placeholder: '••••••••' },
+            ] as const
+          ).map(({ label, field, type, placeholder }) => (
+            <div key={field}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+              <input
+                type={type}
+                value={form[field]}
+                onChange={(e) => set(field, e.target.value)}
+                placeholder={placeholder}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          ))}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Account type</label>
+            <select
+              value={form.role}
+              onChange={(e) => set('role', e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="student">Student</option>
+              <option value="college_admin">Admin</option>
+            </select>
+          </div>
+
+          {form.role === 'college_admin' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Admin code</label>
+              <input
+                type="password"
+                value={form.admin_code}
+                onChange={(e) => set('admin_code', e.target.value)}
+                placeholder="Enter admin registration code"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Required only for admin registration.</p>
+            </div>
+          )}
+
+          {(
+            [
               { label: 'Branch (optional)', field: 'branch', type: 'text', placeholder: 'Computer Engineering' },
               { label: 'Year (optional)', field: 'year', type: 'number', placeholder: '2' },
             ] as const

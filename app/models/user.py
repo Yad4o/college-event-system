@@ -38,7 +38,17 @@ class User(Base):
 
     memberships = relationship("ClubMembership", back_populates="user", cascade="all, delete-orphan")
     join_requests = relationship("ClubJoinRequest", back_populates="user", cascade="all, delete-orphan")
-    club_applications = relationship("ClubApplication", back_populates="applicant", cascade="all, delete-orphan")
+    club_applications = relationship(
+        "ClubApplication",
+        back_populates="applicant",
+        cascade="all, delete-orphan",
+        foreign_keys="ClubApplication.applicant_id",
+    )
+    reviewed_club_applications = relationship(
+        "ClubApplication",
+        foreign_keys="ClubApplication.reviewed_by",
+        back_populates="reviewer",
+    )
     rsvps = relationship("EventRSVP", back_populates="user", cascade="all, delete-orphan")
     attendance_records = relationship("EventAttendance", back_populates="user", cascade="all, delete-orphan")
     certificates = relationship("Certificate", back_populates="user", cascade="all, delete-orphan")

@@ -6,6 +6,8 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     full_name: str
     password: str
+    role: UserRole = UserRole.student
+    admin_code: str | None = None
     branch: str | None = None
     year: int | None = None
 

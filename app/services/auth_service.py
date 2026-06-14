@@ -8,7 +8,9 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.models.user import User
+from app.models.user import UserRole
 from app.schemas.auth import RegisterRequest, LoginRequest
 from app.utils.security import verify_password, hash_password
 from app.utils.jwt import create_access_token, create_refresh_token, decode_token
@@ -28,22 +30,39 @@ def register(db: Session, data: RegisterRequest) -> User:
             detail="Email already registered",
         )
 
+    if data.role not in (UserRole.student, UserRole.college_admin):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unsupported registration role",
+        )
+
+    if data.role == UserRole.college_admin:
+        admin_code = settings.ADMIN_REGISTRATION_CODE.strip()
+        if not admin_code:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin registration is not enabled",
+            )
+        if data.admin_code != admin_code:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid admin registration code",
+            )
+
     user = create_user(
         db,
         email=data.email,
         full_name=data.full_name,
         plain_password=data.password,
+        role=data.role,
         branch=data.branch,
         year=data.year,
     )
 
-    token = secrets.token_urlsafe(32)
-    user.email_verify_token = token
+    user.is_email_verified = True
+    user.email_verify_token = None
     db.commit()
     db.refresh(user)
-
-    from app.tasks.email import send_verification_email
-    send_verification_email.delay(user.email, token)
 
     return user
 

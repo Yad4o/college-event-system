@@ -7,6 +7,11 @@ celery_app = Celery(
     "college_event_system",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
+    include=[
+        "app.tasks.email",
+        "app.tasks.reminders",
+        "app.tasks.certificate",
+    ],
 )
 
 celery_app.conf.update(
@@ -26,4 +31,4 @@ celery_app.conf.update(
     },
 )
 
-celery_app.autodiscover_tasks(["app.tasks"])
+celery_app.autodiscover_tasks(["app"])

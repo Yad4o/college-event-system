@@ -17,7 +17,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/register", response_model=UserRead, status_code=201)
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
-    """Create a new account and send a verification email."""
+    """Create a new account directly without email verification."""
     return auth_svc.register(db, data)
 
 
@@ -35,7 +35,7 @@ def login(data: LoginRequest, response: Response, db: Session = Depends(get_db))
         key="refresh_token",
         value=tokens["refresh_token"],
         httponly=True,
-        secure=True,
+        secure=False,
         samesite="lax",
         max_age=60 * 60 * 24 * 7,
     )

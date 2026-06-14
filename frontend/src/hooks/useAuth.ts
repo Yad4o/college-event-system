@@ -8,6 +8,8 @@ interface RegisterData {
   email: string
   full_name: string
   password: string
+  role?: 'student' | 'college_admin'
+  admin_code?: string
   branch?: string
   year?: number
 }
@@ -23,8 +25,7 @@ export function useAuth() {
 
   async function register(data: RegisterData): Promise<void> {
     await axiosInstance.post('/auth/register', data)
-    // Don't auto-login — user must verify email first
-    navigate('/login', { state: { message: 'Check your email to verify your account.' } })
+    navigate('/login', { state: { message: 'Account created. You can sign in now.' } })
   }
 
   async function logout(): Promise<void> {

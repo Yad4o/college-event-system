@@ -96,3 +96,4 @@ class ClubApplication(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     applicant = relationship("User", foreign_keys=[applicant_id], back_populates="club_applications")
+    reviewer = relationship("User", foreign_keys=[reviewed_by], back_populates="reviewed_club_applications")

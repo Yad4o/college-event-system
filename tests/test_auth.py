@@ -23,7 +23,7 @@ def test_register_success(client: TestClient):
     assert resp.status_code == 201
     body = resp.json()
     assert body["email"] == "newuser@example.com"
-    assert body["is_email_verified"] is False
+    assert body["is_email_verified"] is True
 
 
 def test_register_duplicate_email(client: TestClient, test_user):

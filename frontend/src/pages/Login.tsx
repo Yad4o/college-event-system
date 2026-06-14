@@ -26,7 +26,7 @@ export default function Login() {
       if (status === 401) {
         setError('Invalid email or password.')
       } else if (status === 403) {
-        setError('Please verify your email before logging in.')
+        setError('Your account is disabled or not approved yet.')
       } else {
         setError('Something went wrong. Please try again.')
       }
