@@ -144,7 +144,8 @@ export default function Clubs() {
             message={isAdmin ? 'Add the first club to get the board started.' : 'No clubs in this domain yet — check back soon, or pitch one of your own.'}
             icon={
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" /><path d="M8 12h8M12 8v8" />
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 12h8M12 8v8" />
               </svg>
             }
             action={
