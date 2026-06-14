@@ -73,7 +73,8 @@ export default function ClubDetail() {
           message="It may have been removed, or the link is incorrect."
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" />
+              <circle cx="12" cy="12" r="10" />
+              <path d="M15 9l-6 6M9 9l6 6" />
             </svg>
           }
           action={
@@ -172,7 +173,8 @@ export default function ClubDetail() {
               message={canPostEvents ? 'Be the first to post one for this club.' : 'Check back soon for upcoming events.'}
               icon={
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <path d="M16 2v4M8 2v4M3 10h18" />
                 </svg>
               }
             />
