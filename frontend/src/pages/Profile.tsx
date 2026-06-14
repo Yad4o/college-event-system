@@ -49,7 +49,7 @@ export default function Profile() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-paper">
+      <div className="min-h-screen board-bg">
         <Navbar />
         <div className="max-w-xl mx-auto px-4 sm:px-6 py-8 animate-pulse space-y-4">
           <div className="h-16 w-16 rounded-full bg-ink/5" />
@@ -62,7 +62,7 @@ export default function Profile() {
 
   if (isError || !user) {
     return (
-      <div className="min-h-screen bg-paper">
+      <div className="min-h-screen board-bg">
         <Navbar />
         <div className="text-center py-24 text-alert text-sm">Failed to load profile.</div>
       </div>
@@ -75,7 +75,7 @@ export default function Profile() {
     'neutral'
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen board-bg">
       <Navbar />
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-8">
         <p className="stamp-label text-rust mb-1">Your details</p>
