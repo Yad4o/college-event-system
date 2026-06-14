@@ -81,7 +81,8 @@ function RsvpButton({
       {rsvp?.status === 'confirmed' && (
         <div className="flex flex-wrap items-center gap-4">
           <span className="inline-flex items-center gap-1.5 text-sm text-pine font-display font-semibold">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/>
+            </svg>
             You're confirmed
           </span>
           <button
@@ -174,7 +175,8 @@ export default function EventDetail() {
       <Navbar />
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
         <Link to="/events" className="text-sm text-ink/40 hover:text-ink mb-4 inline-flex items-center gap-1 transition-colors">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/>
+          </svg>
           Events
         </Link>
 
