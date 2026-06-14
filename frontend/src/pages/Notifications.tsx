@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Navbar from '../components/Navbar'
+import EmptyState from '../components/EmptyState'
 import {
   getNotifications,
   markRead,
@@ -12,22 +13,28 @@ import {
 const API_URL = import.meta.env.VITE_API_URL as string
 const WS_URL = API_URL.replace(/^http/, 'ws')
 
-// ── type badge colours ─────────────────────────────────────────────────────
-function typeBadge(type: string) {
-  const map: Record<string, string> = {
-    rsvp_confirmed:    'bg-green-50 text-green-600',
-    rsvp_waitlisted:   'bg-amber-50 text-amber-600',
-    event_reminder:    'bg-blue-50 text-blue-600',
-    certificate_ready: 'bg-purple-50 text-purple-600',
-    club_announcement: 'bg-indigo-50 text-indigo-600',
-    recruitment_update:'bg-orange-50 text-orange-600',
-    general:           'bg-gray-100 text-gray-500',
+// ── type → tone ─────────────────────────────────────────────────────────────
+type Tone = 'rust' | 'pine' | 'gold' | 'slate' | 'alert' | 'neutral'
+
+function notifTone(type: string): Tone {
+  const map: Record<string, Tone> = {
+    rsvp_confirmed:     'pine',
+    rsvp_waitlisted:    'gold',
+    event_reminder:     'slate',
+    certificate_ready:  'gold',
+    club_announcement:  'rust',
+    recruitment_update: 'rust',
   }
-  return map[type] ?? 'bg-gray-100 text-gray-500'
+  return map[type] ?? 'neutral'
 }
 
-function typeLabel(type: string) {
-  return type.replace(/_/g, ' ')
+const TONE_CLASSES: Record<Tone, string> = {
+  rust:    'bg-rust/10 text-rust',
+  pine:    'bg-pine/10 text-pine',
+  gold:    'bg-gold/15 text-[#9c6a1f]',
+  slate:   'bg-[#5B7FBE]/10 text-[#5B7FBE]',
+  alert:   'bg-alert/10 text-alert',
+  neutral: 'bg-ink/5 text-ink/55',
 }
 
 function timeAgo(iso: string) {
@@ -43,6 +50,7 @@ function timeAgo(iso: string) {
 // ── single notification row ────────────────────────────────────────────────
 function NotifRow({ notif }: { notif: Notification }) {
   const qc = useQueryClient()
+  const tone = notifTone(notif.notification_type)
 
   const readMut = useMutation({
     mutationFn: () => markRead(notif.id),
@@ -56,31 +64,31 @@ function NotifRow({ notif }: { notif: Notification }) {
   const inner = (
     <div
       className={`flex items-start gap-3 px-5 py-4 transition-colors ${
-        notif.is_read ? 'bg-white' : 'bg-blue-50/40'
+        notif.is_read ? '' : 'bg-rust/[0.03]'
       }`}
     >
-      {/* Unread dot */}
-      <div className="mt-1.5 flex-shrink-0">
-        {!notif.is_read ? (
-          <span className="block w-2 h-2 rounded-full bg-blue-500" />
-        ) : (
-          <span className="block w-2 h-2 rounded-full bg-transparent" />
-        )}
+      {/* Unread indicator */}
+      <div className="mt-2 flex-shrink-0">
+        <span
+          className={`block w-1.5 h-1.5 rounded-full ${
+            notif.is_read ? 'bg-transparent' : 'bg-rust'
+          }`}
+        />
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
           <span
-            className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${typeBadge(
-              notif.notification_type
-            )}`}
+            className={`stamp-label inline-flex items-center px-2 py-0.5 rounded-full ${TONE_CLASSES[tone]}`}
           >
-            {typeLabel(notif.notification_type)}
+            {notif.notification_type.replace(/_/g, ' ')}
           </span>
-          <span className="text-xs text-gray-400">{timeAgo(notif.created_at)}</span>
+          <span className="text-xs text-ink/35 font-mono">{timeAgo(notif.created_at)}</span>
         </div>
-        <p className="text-sm font-semibold text-gray-800">{notif.title}</p>
-        <p className="text-sm text-gray-500 leading-snug mt-0.5">{notif.message}</p>
+        <p className={`text-sm leading-snug ${notif.is_read ? 'text-ink/60' : 'text-ink font-medium'}`}>
+          {notif.title}
+        </p>
+        <p className="text-sm text-ink/45 mt-0.5 leading-snug">{notif.message}</p>
       </div>
 
       {!notif.is_read && (
@@ -91,7 +99,7 @@ function NotifRow({ notif }: { notif: Notification }) {
             readMut.mutate()
           }}
           disabled={readMut.isPending}
-          className="flex-shrink-0 text-xs text-gray-400 hover:text-blue-600 disabled:opacity-50 transition-colors mt-1"
+          className="flex-shrink-0 stamp-label text-ink/35 hover:text-rust disabled:opacity-50 transition-colors mt-1"
         >
           Mark read
         </button>
@@ -103,7 +111,7 @@ function NotifRow({ notif }: { notif: Notification }) {
     return (
       <Link
         to={notif.link_url}
-        className="block border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition-colors"
+        className="block border-b border-dashed border-ink/5 last:border-0 hover:bg-ink/[0.015] transition-colors"
       >
         {inner}
       </Link>
@@ -111,7 +119,7 @@ function NotifRow({ notif }: { notif: Notification }) {
   }
 
   return (
-    <div className="border-b border-gray-50 last:border-0">{inner}</div>
+    <div className="border-b border-dashed border-ink/5 last:border-0">{inner}</div>
   )
 }
 
@@ -123,10 +131,10 @@ export default function Notifications() {
   const { data: notifications, isLoading, isError } = useQuery({
     queryKey: ['notifications'],
     queryFn: getNotifications,
-    refetchInterval: 60_000, // background poll every 60s as fallback
+    refetchInterval: 60_000,
   })
 
-  // ── WebSocket real-time push ──────────────────────────────────────────────
+  // WebSocket real-time push
   useEffect(() => {
     const token = localStorage.getItem('access_token')
     if (!token) return
@@ -157,7 +165,6 @@ export default function Notifications() {
           created_at: new Date().toISOString(),
         }
 
-        // Prepend to list (unread → top)
         qc.setQueryData(['notifications'], (old: Notification[] | undefined) =>
           old ? [newNotif, ...old] : [newNotif]
         )
@@ -186,18 +193,16 @@ export default function Notifications() {
   const unreadCount = notifications?.filter((n) => !n.is_read).length ?? 0
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-paper">
       <Navbar />
-      <div className="max-w-2xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+        <div className="flex items-start justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">
+            <p className="stamp-label text-rust mb-1">What's happening</p>
+            <h1 className="text-2xl font-display font-bold text-ink">
               Notifications
               {unreadCount > 0 && (
-                <span className="ml-2 text-base font-semibold text-blue-600">
-                  ({unreadCount} new)
-                </span>
+                <span className="ml-2 text-base font-medium text-rust">· {unreadCount} new</span>
               )}
             </h1>
           </div>
@@ -205,24 +210,23 @@ export default function Notifications() {
             <button
               onClick={() => markAllMut.mutate()}
               disabled={markAllMut.isPending}
-              className="text-sm text-blue-500 hover:text-blue-700 disabled:opacity-50 font-medium transition-colors"
+              className="flex-shrink-0 stamp-label text-ink/40 hover:text-rust disabled:opacity-50 transition-colors mt-1"
             >
-              {markAllMut.isPending ? 'Marking…' : 'Mark all as read'}
+              {markAllMut.isPending ? 'Marking…' : 'Mark all read'}
             </button>
           )}
         </div>
 
-        {/* Content */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="pin-card rounded-2xl border border-ink/5 shadow-pin overflow-hidden">
           {isLoading && (
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-dashed divide-ink/5">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="px-5 py-4 animate-pulse flex gap-3">
-                  <div className="w-2 h-2 mt-1.5 rounded-full bg-gray-100 flex-shrink-0" />
+                  <div className="w-1.5 h-1.5 mt-2 rounded-full bg-ink/5 flex-shrink-0" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-3 bg-gray-100 rounded w-1/4" />
-                    <div className="h-4 bg-gray-100 rounded w-3/4" />
-                    <div className="h-3 bg-gray-100 rounded w-1/2" />
+                    <div className="h-3 bg-ink/5 rounded w-1/4" />
+                    <div className="h-4 bg-ink/5 rounded w-3/4" />
+                    <div className="h-3 bg-ink/5 rounded w-1/2" />
                   </div>
                 </div>
               ))}
@@ -230,23 +234,34 @@ export default function Notifications() {
           )}
 
           {isError && (
-            <p className="text-center py-12 text-red-500 text-sm">
-              Failed to load notifications.
-            </p>
+            <EmptyState
+              tone="error"
+              title="Couldn't load notifications"
+              message="Something went wrong. Try refreshing the page."
+              icon={
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                </svg>
+              }
+            />
           )}
 
           {!isLoading && !isError && notifications?.length === 0 && (
-            <div className="text-center py-16">
-              <p className="text-gray-400 text-sm">No notifications yet.</p>
-              <p className="text-gray-300 text-xs mt-1">
-                Activity from events, clubs, and certificates will appear here.
-              </p>
-            </div>
+            <EmptyState
+              title="All quiet"
+              message="Activity from events, clubs, and certificates will appear here."
+              icon={
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+              }
+            />
           )}
 
-          {!isLoading &&
-            !isError &&
-            notifications?.map((n) => <NotifRow key={n.id} notif={n} />)}
+          {!isLoading && !isError && notifications?.map((n) => (
+            <NotifRow key={n.id} notif={n} />
+          ))}
         </div>
       </div>
     </div>
