@@ -116,7 +116,7 @@ export default function Events() {
     .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime())
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen board-bg">
       <Navbar />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <p className="stamp-label text-rust mb-1">What's on</p>
