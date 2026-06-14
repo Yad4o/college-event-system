@@ -3,17 +3,19 @@ import type { ReactNode } from 'react'
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen flex bg-paper">
-      {/* Left — form */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10">
-        <div className="w-full max-w-md">
-          <div className="flex items-center gap-2 mb-8">
-            <div className="w-10 h-10 rounded-full border-2 border-rust flex items-center justify-center">
-              <span className="font-display font-bold text-lg text-rust">C</span>
+    <div className="min-h-screen flex corkboard">
+      {/* Left — form, pinned to the board as an index card */}
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
+        <div className="w-full max-w-md tape">
+          <div className="bg-paper rounded-2xl shadow-pin-hover border border-ink/5 p-6 sm:p-8">
+            <div className="flex items-center gap-2 mb-8">
+              <div className="w-10 h-10 rounded-full border-2 border-rust flex items-center justify-center">
+                <span className="font-display font-bold text-lg text-rust">C</span>
+              </div>
+              <span className="font-display font-bold text-lg text-ink tracking-tight">Campus Board</span>
             </div>
-            <span className="font-display font-bold text-lg text-ink tracking-tight">Campus Board</span>
+            {children}
           </div>
-          {children}
         </div>
       </div>
 
