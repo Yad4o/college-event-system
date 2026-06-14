@@ -1,6 +1,9 @@
+
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import AuthLayout from '../components/AuthLayout'
+import { Field, Input, Select } from '../components/FormField'
 
 export default function Register() {
   const { register } = useAuth()
@@ -23,7 +26,11 @@ export default function Register() {
 
   async function handleSubmit() {
     if (!form.email || !form.full_name || !form.password) {
-      setError('Email, full name, and password are required.')
+      setError('Name, email, and password are required.')
+      return
+    }
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.')
       return
     }
     setError('')
@@ -33,19 +40,21 @@ export default function Register() {
         email: form.email,
         full_name: form.full_name,
         password: form.password,
-        role: form.role as 'student' | 'college_admin',
+        role: form.role,
         admin_code: form.role === 'college_admin' ? form.admin_code || undefined : undefined,
         branch: form.branch || undefined,
         year: form.year ? parseInt(form.year, 10) : undefined,
       })
     } catch (err: unknown) {
-      const status = (err as { response?: { status: number; data?: { detail?: string } } })?.response
-      if (status?.status === 400) {
-        setError(status.data?.detail ?? 'Email already registered.')
-      } else if (status?.status === 422) {
-        setError('Please check your input — some fields are invalid.')
+      const resp = (err as { response?: { status: number; data?: { detail?: string } } })?.response
+      if (resp?.status === 400) {
+        setError(resp.data?.detail ?? 'That email is already registered.')
+      } else if (resp?.status === 403) {
+        setError(resp.data?.detail ?? 'Invalid admin registration code.')
+      } else if (resp?.status === 422) {
+        setError('Check your details — something doesn\\'t look right.')
       } else {
-        setError('Something went wrong. Please try again.')
+        setError('Something went wrong. Try again in a moment.')
       }
     } finally {
       setLoading(false)
@@ -53,97 +62,99 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-10">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-1">Create account</h1>
-        <p className="text-sm text-gray-500 mb-6">College Event System</p>
+    <AuthLayout>
+      <p className="stamp-label text-rust mb-1">Join the board</p>
+      <h1 className="text-2xl font-display font-bold text-ink mb-1">Create your account</h1>
+      <p className="text-sm text-ink/45 mb-6">
+        Your account is ready instantly — no email step.
+      </p>
 
-        {error && (
-          <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-600 px-4 py-3 text-sm">
-            {error}
-          </div>
+      {error && (
+        <div className="mb-4 rounded-lg bg-alert/10 border border-alert/20 text-alert px-4 py-3 text-sm">
+          {error}
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <Field label="Full name">
+          <Input
+            value={form.full_name}
+            onChange={(e) => set('full_name', e.target.value)}
+            placeholder="Jane Doe"
+          />
+        </Field>
+
+        <Field label="Email">
+          <Input
+            type="email"
+            value={form.email}
+            onChange={(e) => set('email', e.target.value)}
+            placeholder="you@college.edu"
+          />
+        </Field>
+
+        <Field label="Password" hint="At least 8 characters">
+          <Input
+            type="password"
+            value={form.password}
+            onChange={(e) => set('password', e.target.value)}
+            placeholder="••••••••"
+          />
+        </Field>
+
+        <Field label="Account type">
+          <Select value={form.role} onChange={(e) => set('role', e.target.value)}>
+            <option value="student">Student</option>
+            <option value="college_admin">College admin</option>
+          </Select>
+        </Field>
+
+        {form.role === 'college_admin' && (
+          <Field label="Admin code" hint="Provided by your institution — required to register as admin">
+            <Input
+              type="password"
+              value={form.admin_code}
+              onChange={(e) => set('admin_code', e.target.value)}
+              placeholder="Enter registration code"
+            />
+          </Field>
         )}
 
-        <div className="space-y-4">
-          {(
-            [
-              { label: 'Full name', field: 'full_name', type: 'text', placeholder: 'Jane Doe' },
-              { label: 'Email', field: 'email', type: 'email', placeholder: 'you@college.edu' },
-              { label: 'Password', field: 'password', type: 'password', placeholder: '••••••••' },
-            ] as const
-          ).map(({ label, field, type, placeholder }) => (
-            <div key={field}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-              <input
-                type={type}
-                value={form[field]}
-                onChange={(e) => set(field, e.target.value)}
-                placeholder={placeholder}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          ))}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Account type</label>
-            <select
-              value={form.role}
-              onChange={(e) => set('role', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="student">Student</option>
-              <option value="college_admin">Admin</option>
-            </select>
-          </div>
-
-          {form.role === 'college_admin' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Admin code</label>
-              <input
-                type="password"
-                value={form.admin_code}
-                onChange={(e) => set('admin_code', e.target.value)}
-                placeholder="Enter admin registration code"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="mt-1 text-xs text-gray-500">Required only for admin registration.</p>
-            </div>
-          )}
-
-          {(
-            [
-              { label: 'Branch (optional)', field: 'branch', type: 'text', placeholder: 'Computer Engineering' },
-              { label: 'Year (optional)', field: 'year', type: 'number', placeholder: '2' },
-            ] as const
-          ).map(({ label, field, type, placeholder }) => (
-            <div key={field}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-              <input
-                type={type}
-                value={form[field]}
-                onChange={(e) => set(field, e.target.value)}
-                placeholder={placeholder}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          ))}
-
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-lg py-2 text-sm transition-colors"
-          >
-            {loading ? 'Creating account…' : 'Create account'}
-          </button>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Branch" hint="Optional">
+            <Input
+              value={form.branch}
+              onChange={(e) => set('branch', e.target.value)}
+              placeholder="Computer Engg"
+            />
+          </Field>
+          <Field label="Year" hint="Optional">
+            <Input
+              type="number"
+              min={1}
+              max={6}
+              value={form.year}
+              onChange={(e) => set('year', e.target.value)}
+              placeholder="2"
+            />
+          </Field>
         </div>
 
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 hover:underline font-medium">
-            Sign in
-          </Link>
-        </p>
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full bg-rust hover:bg-rust/90 disabled:opacity-50 text-white font-display font-semibold rounded-lg py-2.5 text-sm transition-colors"
+        >
+          {loading ? 'Creating account…' : 'Create account'}
+        </button>
       </div>
-    </div>
+
+      <p className="mt-6 text-center text-sm text-ink/45">
+        Already on the board?{' '}
+        <Link to="/login" className="text-rust hover:underline font-medium">
+          Sign in
+        </Link>
+      </p>
+    </AuthLayout>
   )
 }
