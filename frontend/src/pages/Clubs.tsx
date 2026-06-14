@@ -69,7 +69,7 @@ export default function Clubs() {
   })
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen board-bg">
       <Navbar />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex items-start justify-between gap-4 mb-1">
