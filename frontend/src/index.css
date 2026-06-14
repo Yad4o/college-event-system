@@ -98,3 +98,20 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+@layer components {
+  /* Ambient page background for app screens — same paper tone as `.bg-paper`,
+     with soft brand-color washes in the corners and a touch of grain so
+     long pages don't read as flat / empty. */
+  .board-bg {
+    background-color: #FAF7F0;
+    background-image:
+      radial-gradient(ellipse 700px 550px at -5% -8%,   rgba(255,107,53,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 800px 650px at 105% 18%,  rgba(45,106,79,0.065) 0%, transparent 60%),
+      radial-gradient(ellipse 750px 600px at 8% 105%,   rgba(224,164,88,0.09) 0%, transparent 60%),
+      radial-gradient(ellipse 650px 550px at 102% 102%, rgba(255,107,53,0.06) 0%, transparent 65%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat;
+    background-attachment: fixed, fixed, fixed, fixed, scroll;
+  }
+}
