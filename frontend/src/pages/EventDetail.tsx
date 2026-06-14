@@ -132,7 +132,7 @@ export default function EventDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-paper">
+      <div className="min-h-screen board-bg">
         <Navbar />
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 animate-pulse space-y-4">
           <div className="h-8 bg-ink/5 rounded w-2/3" />
@@ -145,7 +145,7 @@ export default function EventDetail() {
 
   if (isError || !event) {
     return (
-      <div className="min-h-screen bg-paper">
+      <div className="min-h-screen board-bg">
         <Navbar />
         <EmptyState
           tone="error"
@@ -171,7 +171,7 @@ export default function EventDetail() {
   const isFull = event.seat_limit != null && event.rsvp_count >= event.seat_limit
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen board-bg">
       <Navbar />
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
         <Link to="/events" className="text-sm text-ink/40 hover:text-ink mb-4 inline-flex items-center gap-1 transition-colors">
