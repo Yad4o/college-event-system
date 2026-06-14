@@ -21,6 +21,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       {/* Right — noticeboard visual, hidden on small screens */}
       <div className="hidden lg:flex flex-1 bg-ink relative overflow-hidden items-center justify-center p-12">
+        <div
+          className="absolute inset-0"
+          style={{ backgroundImage: "url(/board-doodles.svg)", backgroundSize: 'cover', backgroundPosition: 'center' }}
+        />
         <div className="absolute inset-0 bg-noise" />
         {/* Scattered "pinned notes" */}
         <div className="relative w-full max-w-sm">
