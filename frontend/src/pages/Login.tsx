@@ -40,7 +40,7 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <p className="stamp-label text-rust mb-1">Welcome back</p>
+      <p className="stamp-label text-green-500 mb-1">Welcome back</p>
       <h1 className="text-2xl font-display font-bold text-ink mb-1">Sign in</h1>
       <p className="text-sm text-ink/45 mb-6">Pick up where you left off on the board.</p>
 
@@ -80,7 +80,7 @@ export default function Login() {
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full bg-rust hover:bg-rust/90 disabled:opacity-50 text-white font-display font-semibold rounded-lg py-2.5 text-sm transition-colors"
+          className="w-full bg-green-400 hover:bg-green-500 disabled:opacity-50 text-white font-display font-semibold rounded-lg py-2.5 text-sm transition-colors"
         >
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
@@ -88,7 +88,7 @@ export default function Login() {
 
       <p className="mt-6 text-center text-sm text-ink/45">
         New here?{' '}
-        <Link to="/register" className="text-rust hover:underline font-medium">
+        <Link to="/register" className="text-green-500 hover:underline font-medium">
           Create an account
         </Link>
       </p>
