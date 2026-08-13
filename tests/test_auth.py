@@ -1,5 +1,5 @@
 """
-Tests for Phase 1 — Auth endpoints.
+Tests for — Auth endpoints.
 
 The conftest.py fixtures (client, db_session, test_user, test_admin) are used
 directly; no additional setup needed here.
