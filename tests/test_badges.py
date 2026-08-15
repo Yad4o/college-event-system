@@ -1,5 +1,5 @@
 """
-Tests for Phase 26 — Badges endpoints.
+Tests for — Badges endpoints.
 """
 
 import pytest
