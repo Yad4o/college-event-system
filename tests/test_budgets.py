@@ -1,5 +1,5 @@
 """
-Tests for Phase 30 — Budget CRUD and line item management.
+Tests for — Budget CRUD and line item management.
 """
 
 from fastapi.testclient import TestClient
